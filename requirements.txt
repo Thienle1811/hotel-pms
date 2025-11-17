@@ -1,0 +1,7 @@
+Django==5.2.8
+gunicorn==23.0.0
+whitenoise==6.7.0  # Cần để phục vụ static files trên PythonAnywhere
+pandas==2.2.0      # Cần cho việc xử lý và xuất Excel
+openpyxl==3.1.2    # Backend cho Pandas để ghi file .xlsx
+psycopg2-binary    # Tùy chọn nếu bạn muốn dùng PostgreSQL
+dj-database-url    # Dễ dàng cấu hình DB từ biến môi trường
