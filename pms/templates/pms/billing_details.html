@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <title>{{ page_title }}</title>
+    <style>
+      body { font-family: sans-serif; margin: 0; padding: 20px; background-color: #f4f4f4; }
+      .invoice-container { max-width: 700px; margin: 20px auto; background-color: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); }
+      h2 { color: #007bff; border-bottom: 2px solid #ccc; padding-bottom: 10px; margin-bottom: 20px; }
+      .info-box { border: 1px solid #ddd; padding: 15px; border-radius: 6px; margin-bottom: 20px; }
+      .info-box p { margin: 5px 0; }
+      
+      table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+      th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+      th { background-color: #e9ecef; }
+      
+      .total-row { background-color: #fff3cd; font-weight: bold; }
+      .final-total { background-color: #28a745; color: white; font-size: 1.2em; }
+
+      .action-buttons { margin-top: 30px; text-align: right; }
+      .action-buttons button { padding: 12px 25px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+      .action-buttons .btn-confirm { background-color: #dc3545; color: white; margin-left: 10px; }
+      .action-buttons .btn-cancel { background-color: #6c757d; color: white; }
+    </style>
+  </head>
+  <body>
+    <div class="invoice-container">
+      <h2>Hóa đơn Thanh toán Phòng {{ room.room_number }}</h2>
+
+      {% if messages %}
+        {% for message in messages %}
+          <div style="padding: 10px; background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; margin-bottom: 15px;">
+            {{ message }}
+          </div>
+        {% endfor %}
+      {% endif %}
+
+      <div class="info-box">
+        <p><strong>Khách hàng:</strong> {{ guest.full_name }}</p>
+        <p><strong>Check-in:</strong> {{ reservation.check_in_date|date:"H:i d/m/Y" }}</p>
+        <p><strong>Check-out (Tạm tính):</strong> {{ bill.check_out_time|date:"H:i d/m/Y" }}</p>
+        <p><strong>Tổng thời gian lưu trú:</strong> {{ bill.num_nights }} Đêm</p>
+      </div>
+
+      <h3>Chi tiết Chi phí</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Loại Chi phí</th>
+            <th>Mô tả</th>
+            <th style="text-align: right;">Thành tiền (VND)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Tiền phòng</td>
+            <td>{{ bill.num_nights }} đêm x {{ bill.room_rate|floatformat:0 }} VND</td>
+            <td style="text-align: right;">{{ bill.total_room_cost|floatformat:0 }}</td>
+          </tr>
+          
+          {% for charge in bill.service_charges %}
+          <tr>
+            <td>Phí dịch vụ</td>
+            <td>{{ charge.item_name }} x {{ charge.quantity }} ({{ charge.price|floatformat:0 }})</td>
+            <td style="text-align: right;">{{ charge.total_price|floatformat:0 }}</td>
+          </tr>
+          {% endfor %}
+
+          <tr class="total-row">
+            <td colspan="2" style="text-align: right;">TỔNG PHÍ DỊCH VỤ</td>
+            <td style="text-align: right;">{{ bill.total_service_cost|floatformat:0 }}</td>
+          </tr>
+
+          <tr class="final-total">
+            <td colspan="2" style="text-align: right;">TỔNG THANH TOÁN CUỐI CÙNG</td>
+            <td style="text-align: right;">{{ bill.final_bill|floatformat:0 }} VND</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="action-buttons">
+        <a href="{% url 'dashboard' %}" class="btn-cancel" style="padding: 12px 25px; text-decoration: none; border-radius: 5px;">Hủy bỏ & Quay lại</a>
+        <form action="{% url 'perform-check-out' reservation.id %}" method="POST" style="display: inline;">
+          {% csrf_token %}
+          <button type="submit" class="btn-confirm">Xác nhận Thanh toán & Check-out</button>
+        </form>
+      </div>
+    </div>
+  </body>
+</html>

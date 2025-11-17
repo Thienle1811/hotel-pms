@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <title>{{ page_title }}</title>
+    <style>
+      body { font-family: sans-serif; margin: 0; display: flex; }
+      .sidebar { width: 250px; background-color: #343a40; color: white; padding: 20px; min-height: 100vh; }
+      .sidebar a { color: white; text-decoration: none; display: block; padding: 10px 0; margin-bottom: 5px; }
+      .content { flex-grow: 1; padding: 30px; background-color: #f8f9fa; }
+      .service-form-container {
+        border: 1px solid #ccc;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 30px;
+        background-color: white;
+      }
+      .form-field { margin-bottom: 15px; }
+      .form-field label { display: block; font-weight: bold; margin-bottom: 5px; }
+      .form-field input { padding: 8px; border: 1px solid #ccc; border-radius: 4px; width: 100%; box-sizing: border-box; }
+      
+      table { width: 100%; border-collapse: collapse; margin-top: 20px; background-color: white; }
+      th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+      th { background-color: #e9ecef; }
+      .total-row { background-color: #fff3cd; font-weight: bold; }
+    </style>
+  </head>
+  <body>
+    <div class="sidebar">
+        <h3>Khách sạn A</h3>
+        <hr style="border-color: #495057;">
+        <a href="{% url 'dashboard' %}">Dashboard/Sơ đồ phòng</a>
+        <a href="#">Lịch Đặt phòng</a>
+        <a href="#" style="background-color: #495057;">Quản lý Dịch vụ</a>
+        <a href="{% url 'manage-requests' %}">Quản lý Yêu cầu (QR)</a>
+        <a href="{% url 'export-registry' %}">Xuất File Tạm Trú</a>
+        <hr style="border-color: #495057;">
+        <a href="{% url 'logout' %}" style="background-color: #dc3545;">Đăng xuất ({{ user.username }})</a>
+    </div>
+
+    <div class="content">
+      <h2>{{ page_title }}</h2>
+      <p style="font-size: 1.1em; font-weight: bold;">Khách hàng: {{ reservation.guest.full_name }}</p>
+      
+      {% if messages %}
+          {% for message in messages %}
+              <div style="padding: 10px; background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; margin-bottom: 15px;">
+                  {{ message }}
+              </div>
+          {% endfor %}
+      {% endif %}
+
+      <div class="service-form-container">
+        <h3>Thêm Dịch vụ/Sản phẩm</h3>
+        <form action="{% url 'add-service-charge' reservation.id %}" method="POST" style="display: flex; gap: 10px; align-items: flex-end;">
+            {% csrf_token %}
+            
+            <div class="form-field" style="flex: 3;">
+                <label for="{{ service_form.item_name.id_for_label }}">Tên Dịch vụ:</label>
+                {{ service_form.item_name }}
+            </div>
+            <div class="form-field" style="flex: 1;">
+                <label for="{{ service_form.quantity.id_for_label }}">Số lượng:</label>
+                {{ service_form.quantity }}
+            </div>
+            <div class="form-field" style="flex: 2;">
+                <label for="{{ service_form.price.id_for_label }}">Đơn giá:</label>
+                {{ service_form.price }}
+            </div>
+            
+            <button type="submit" style="flex: 1; height: 38px;">Thêm</button>
+        </form>
+      </div>
+      
+      <h3>Danh sách Phí Dịch vụ Đã Ghi nhận</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>STT</th>
+            <th>Tên Dịch vụ</th>
+            <th>Số lượng</th>
+            <th>Đơn giá (VND)</th>
+            <th>Tổng cộng (VND)</th>
+            <th>Thời điểm</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for charge in service_charges %}
+          <tr>
+            <td>{{ forloop.counter }}</td>
+            <td>{{ charge.item_name }}</td>
+            <td>{{ charge.quantity }}</td>
+            <td>{{ charge.price|floatformat:0|default:"0" }}</td>
+            <td>{{ charge.total_price|floatformat:0|default:"0" }}</td>
+            <td>{{ charge.created_at|date:"H:i d/m" }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="6">Chưa có dịch vụ nào được ghi nhận.</td>
+          </tr>
+          {% endfor %}
+          <tr class="total-row">
+            <td colspan="4" style="text-align: right;">TỔNG CỘNG PHÍ DỊCH VỤ:</td>
+            <td>{{ total_service_cost|floatformat:0|default:"0" }}</td>
+            <td></td>
+          </tr>
+        </tbody>
+      </table>
+      
+      <div style="margin-top: 20px;">
+          <a href="{% url 'dashboard' %}" style="color: #007bff; text-decoration: none;">&larr; Quay lại Dashboard</a>
+      </div>
+
+    </div>
+  </body>
+</html>

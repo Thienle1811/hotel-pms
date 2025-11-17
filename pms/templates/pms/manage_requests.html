@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <title>{{ page_title }}</title>
+    <style>
+      body { font-family: sans-serif; margin: 0; display: flex; }
+      .sidebar { width: 250px; background-color: #343a40; color: white; padding: 20px; min-height: 100vh; }
+      .sidebar a { color: white; text-decoration: none; display: block; padding: 10px 0; margin-bottom: 5px; }
+      .content { flex-grow: 1; padding: 30px; background-color: #f8f9fa; }
+      table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+      th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+      th { background-color: #e9ecef; }
+      .status-New { color: #ffc107; font-weight: bold; }
+      .status-Processing { color: #007bff; font-weight: bold; }
+      .actions button {
+        background-color: #28a745;
+        color: white;
+        border: none;
+        padding: 5px 10px;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="sidebar">
+        <h3>Khách sạn A</h3>
+        <hr style="border-color: #495057;">
+        <a href="{% url 'dashboard' %}">Dashboard/Sơ đồ phòng</a>
+        <a href="#">Lịch Đặt phòng</a>
+        <a href="#">Quản lý Dịch vụ</a>
+        <a href="{% url 'manage-requests' %}" style="background-color: #495057;">Quản lý Yêu cầu (QR)</a>
+        <a href="{% url 'export-registry' %}">Xuất File Tạm Trú</a>
+        <hr style="border-color: #495057;">
+        <a href="{% url 'logout' %}" style="background-color: #dc3545;">Đăng xuất ({{ user.username }})</a>
+    </div>
+
+    <div class="content">
+      <h2>{{ page_title }}</h2>
+      
+      {% if messages %}
+          {% for message in messages %}
+              <div style="padding: 10px; background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; margin-bottom: 15px;">
+                  {{ message }}
+              </div>
+          {% endfor %}
+      {% endif %}
+
+      <table>
+        <thead>
+          <tr>
+            <th>Phòng</th>
+            <th>Khách hàng</th>
+            <th>Nội dung Yêu cầu</th>
+            <th>Thời điểm</th>
+            <th>Trạng thái</th>
+            <th>Hành động</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for req in requests_list %}
+          <tr>
+            <td>P. **{{ req.room.room_number }}**</td>
+            <td>{{ req.reservation.guest.full_name|default:"---" }}</td>
+            <td>{{ req.content }}</td>
+            <td>{{ req.created_at|date:"H:i d/m/Y" }}</td>
+            <td class="status-{{ req.status }}">
+                {{ req.get_status_display }}
+            </td>
+            <td class="actions">
+              <form action="{% url 'complete-request' req.id %}" method="POST">
+                {% csrf_token %}
+                <button type="submit">Hoàn thành</button>
+              </form>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="6">Không có yêu cầu mới nào.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </body>
+</html>

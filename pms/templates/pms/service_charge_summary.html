@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <title>{{ page_title }}</title>
+    <style>
+      body { font-family: sans-serif; margin: 0; display: flex; }
+      .sidebar { width: 250px; background-color: #343a40; color: white; padding: 20px; min-height: 100vh; }
+      .sidebar a { color: white; text-decoration: none; display: block; padding: 10px 0; margin-bottom: 5px; }
+      .content { flex-grow: 1; padding: 30px; background-color: #f8f9fa; }
+      table { width: 100%; border-collapse: collapse; margin-top: 20px; background-color: white; }
+      th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+      th { background-color: #e9ecef; }
+      .total-revenue-box {
+        background-color: #fff3cd;
+        border: 1px solid #ffeeba;
+        padding: 15px;
+        border-radius: 8px;
+        font-weight: bold;
+        color: #856404;
+        margin-bottom: 20px;
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="sidebar">
+        <h3>Khách sạn A</h3>
+        <hr style="border-color: #495057;">
+        <a href="{% url 'dashboard' %}">Dashboard</a>
+        <a href="{% url 'manage-rooms' %}">Sơ đồ/Quản lý Phòng</a>
+        <a href="{% url 'reservation-calendar' %}">Lịch Đặt phòng</a>
+        <a href="{% url 'service-summary' %}" style="background-color: #495057;">Quản lý Dịch vụ</a>
+        <a href="{% url 'manage-requests' %}">Quản lý Yêu cầu (QR)</a>
+        <a href="{% url 'export-registry' %}">Xuất File Tạm Trú</a>
+        <hr style="border-color: #495057;">
+        <a href="{% url 'logout' %}" style="background-color: #dc3545;">Đăng xuất ({{ user.username }})</a>
+    </div>
+
+    <div class="content">
+      <h2>{{ page_title }}</h2>
+      
+      <div class="total-revenue-box">
+          TỔNG DOANH THU DỊCH VỤ ĐÃ GHI NHẬN: **{{ total_revenue|floatformat:0 }} VND**
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Phòng</th>
+            <th>Khách hàng</th>
+            <th>Tên Dịch vụ</th>
+            <th>Số lượng</th>
+            <th>Đơn giá (VND)</th>
+            <th>Thành tiền (VND)</th>
+            <th>Thời điểm</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for charge in all_charges %}
+          <tr>
+            <td>P. **{{ charge.reservation.room.room_number }}**</td>
+            <td>{{ charge.reservation.guest.full_name }}</td>
+            <td>{{ charge.item_name }}</td>
+            <td>{{ charge.quantity }}</td>
+            <td>{{ charge.price|floatformat:0 }}</td>
+            <td>{{ charge.total_price|floatformat:0 }}</td>
+            <td>{{ charge.created_at|date:"H:i d/m/Y" }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="7">Chưa có khoản phí dịch vụ nào được ghi nhận.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </body>
+</html>

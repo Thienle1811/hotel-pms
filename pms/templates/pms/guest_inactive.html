@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Phòng {{ room.room_number }}</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; padding: 50px; background-color: #fff3cd; color: #856404; }
+        .alert-box { border: 1px solid #ffeeba; background-color: #fff3cd; padding: 20px; border-radius: 8px; max-width: 400px; margin: 0 auto; }
+        h2 { color: #856404; }
+    </style>
+  </head>
+  <body>
+    <div class="alert-box">
+        <h2>Dịch vụ chưa kích hoạt</h2>
+        <p>Phòng **{{ room.room_number }}** hiện đang ở trạng thái **{{ room.get_status_display }}**.</p>
+        <p>Dịch vụ gửi yêu cầu chỉ được kích hoạt sau khi quý khách hoàn tất thủ tục Check-in. Xin cảm ơn!</p>
+    </div>
+  </body>
+</html>

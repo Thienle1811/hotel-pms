@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <title>{{ page_title }}</title>
+    <style>
+      body { font-family: sans-serif; margin: 0; display: flex; }
+      .sidebar { width: 250px; background-color: #343a40; color: white; padding: 20px; min-height: 100vh; }
+      .sidebar h3 { margin-top: 0; border-bottom: 1px solid #495057; padding-bottom: 10px; }
+      .sidebar a { color: white; text-decoration: none; display: block; padding: 10px 0; margin-bottom: 5px; }
+      .sidebar a:hover { background-color: #495057; padding-left: 5px; }
+      .content { flex-grow: 1; padding: 30px; background-color: #f8f9fa; }
+      h2 { color: #333; margin-bottom: 20px; }
+      table { width: 100%; border-collapse: collapse; margin-top: 20px; background-color: white; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); }
+      th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+      th { background-color: #e9ecef; color: #333; }
+      .actions a { color: #007bff; text-decoration: none; margin-right: 10px; }
+      .actions a:hover { text-decoration: underline; }
+      
+      /* Màu trạng thái */
+      .status-Vacant { color: #28a745; font-weight: bold; }
+      .status-Dirty { color: #6c757d; font-weight: bold; }
+      .status-Occupied { color: #dc3545; font-weight: bold; }
+      .status-Booked { color: #ffc107; font-weight: bold; }
+
+      /* Cập nhật cho Menu */
+      .logout-link { background-color: #dc3545; text-align: center; border-radius: 5px; margin-top: 20px; }
+    </style>
+  </head>
+  <body>
+    <div class="sidebar">
+      <h3>Khách sạn A</h3>
+      <hr style="border-color: #495057;">
+      <a href="{% url 'dashboard' %}">Dashboard</a> 
+      <a href="{% url 'manage-rooms' %}" style="background-color: #495057;">Sơ đồ/Quản lý Phòng</a> 
+      <a href="{% url 'reservation-calendar' %}">Lịch Đặt phòng</a> 
+      <a href="{% url 'manage-service-inventory' %}">Quản lý Dịch vụ</a>
+      <a href="{% url 'manage-requests' %}">Quản lý Yêu cầu (QR)</a>
+      <a href="{% url 'export-registry' %}">Xuất File Tạm Trú</a>
+      <hr style="border-color: #495057;">
+      <a href="{% url 'logout' %}" class="logout-link">Đăng xuất ({{ user.username }})</a>
+    </div>
+
+    <div class="content">
+      <h2>{{ page_title }}</h2>
+      
+      {% if messages %}
+          {% for message in messages %}
+              <div style="padding: 10px; background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; margin-bottom: 15px;">
+                  {{ message }}
+              </div>
+          {% endfor %}
+      {% endif %}
+
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Số Phòng</th>
+            <th>Loại Phòng</th>
+            <th>Giá/Đêm (VND)</th>
+            <th>Trạng thái</th>
+            <th>Hành động</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for room in rooms %}
+          <tr>
+            <td>{{ room.id }}</td>
+            <td><strong>{{ room.room_number }}</strong></td>
+            <td>{{ room.room_type }}</td>
+            <td>{{ room.price_per_night|floatformat:0 }}</td>
+            <td class="status-{{ room.status }}">{{ room.get_status_display }}</td>
+            <td class="actions">
+              <a href="{% url 'room-qr-code' room.id %}" style="color: #28a745; margin-right: 10px;">Xem QR</a> 
+              <a href="{% url 'room-edit' room.id %}">Sửa Cấu hình</a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <title>{{ page_title }}</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+      body { font-family: sans-serif; background-color: #f4f4f4; margin: 0; padding: 20px; }
+      .container { max-width: 600px; margin: 20px auto; background-color: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); text-align: center; }
+      h2 { color: #007bff; border-bottom: 2px solid #ccc; padding-bottom: 10px; margin-bottom: 20px; }
+      .qr-area { 
+        border: 1px solid #ddd; 
+        padding: 20px; 
+        border-radius: 6px; 
+        display: inline-block; 
+        margin-bottom: 20px; 
+        /* Vùng hiển thị mã QR */
+      }
+      #qrcode {
+          display: inline-block;
+      }
+      p { word-break: break-all; font-size: 0.9em; color: #555; }
+      .print-button { background-color: #28a745; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; margin-top: 10px; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h2>Mã QR Code Cố định Phòng {{ room.room_number }}</h2>
+      
+      <div class="qr-area">
+        <div id="qrcode"></div>
+      </div>
+
+      <p>Mã QR này trỏ đến URL cố định:</p>
+      <p><strong>{{ full_request_url }}</strong></p>
+
+      <button class="print-button" onclick="window.print()">In Mã QR (Dán tại Phòng)</button>
+      <a href="{% url 'manage-rooms' %}" style="display: block; margin-top: 10px; color: #007bff;">Quay lại Quản lý Phòng</a>
+    </div>
+
+    <script>
+      // Khởi tạo mã QR bằng JavaScript
+      new QRCode(document.getElementById("qrcode"), {
+        text: "{{ full_request_url }}", // Sử dụng URL đầy đủ được truyền từ View
+        width: 300,
+        height: 300,
+        colorDark: "#000000",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.H
+      });
+    </script>
+  </body>
+</html>

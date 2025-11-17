@@ -1,0 +1,46 @@
+from django.urls import path
+from . import views
+from django.contrib.auth.views import LoginView, LogoutView
+
+urlpatterns = [
+    # LOGIN / LOGOUT
+    path('login/', LoginView.as_view(template_name='pms/login.html'), name='login'),
+    path('logout/', LogoutView.as_view(), name='logout'), 
+    
+    # DASHBOARD - Trang chủ
+    path('', views.dashboard, name='dashboard'), 
+    
+    # QUẢN LÝ PHÒNG VÀ QR CODE
+    path('rooms/manage/', views.manage_rooms, name='manage-rooms'),
+    path('rooms/edit/<int:room_id>/', views.room_edit, name='room-edit'),
+    path('rooms/qr/<int:room_id>/', views.room_qr_code, name='room-qr-code'), # ĐƯỜNG DẪN XEM QR
+    
+    # CHỨC NĂNG NGHIỆP VỤ CHÍNH
+    path('room/<int:room_id>/booking/', views.create_booking, name='create-booking'),
+    path('reservation/<int:reservation_id>/checkin/', views.perform_check_in, name='perform-check-in'),
+    
+    # HÓA ĐƠN VÀ CHECK-OUT
+    path('reservation/<int:reservation_id>/bill/', views.billing_details, name='billing-details'), 
+    path('reservation/<int:reservation_id>/checkout/', views.perform_check_out, name='perform-check-out'),
+    
+    # XUẤT FILE EXCEL
+    path('export/registry/', views.export_temporary_registry, name='export-registry'),
+    
+    # QUẢN LÝ YÊU CẦU KHÁCH HÀNG (QR CODE PORTAL)
+    path('guest/request/<int:room_id>/', views.guest_request_portal, name='guest-request-portal'),
+    path('requests/', views.manage_requests, name='manage-requests'), 
+    path('requests/complete/<int:request_id>/', views.complete_request, name='complete-request'),
+    
+    # LỊCH ĐẶT PHÒNG
+    path('reservations/calendar/', views.reservation_calendar, name='reservation-calendar'),
+    
+    # QUẢN LÝ DANH MỤC DỊCH VỤ (SERVICE ITEM INVENTORY)
+    path('services/inventory/', views.manage_service_inventory, name='manage-service-inventory'),
+    path('services/inventory/create/', views.service_item_create, name='service-item-create'),
+    path('services/inventory/edit/<int:item_id>/', views.service_item_edit, name='service-item-edit'),
+    path('services/inventory/delete/<int:item_id>/', views.service_item_delete, name='service-item-delete'),
+
+    # QUẢN LÝ GIAO DỊCH DỊCH VỤ (GẮN VỚI PHÒNG)
+    path('reservation/<int:reservation_id>/services/', views.manage_room_services, name='manage-room-services'),
+    path('reservation/<int:reservation_id>/services/add/', views.add_service_charge, name='add-service-charge'),
+]

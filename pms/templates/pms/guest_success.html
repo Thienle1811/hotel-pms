@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Yêu cầu thành công</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; padding: 50px; background-color: #d4edda; color: #155724; }
+        .success-box { border: 1px solid #c3e6cb; background-color: #d4edda; padding: 20px; border-radius: 8px; max-width: 400px; margin: 0 auto; }
+        h2 { color: #155724; }
+    </style>
+  </head>
+  <body>
+    <div class="success-box">
+        <h2>✅ Yêu cầu đã được ghi nhận!</h2>
+        <p>Phòng **{{ room.room_number }}**.</p>
+        <p>{{ message }}</p>
+        <p>Vui lòng chờ nhân viên của chúng tôi.</p>
+    </div>
+  </body>
+</html>

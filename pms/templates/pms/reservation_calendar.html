@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <title>{{ page_title }}</title>
+    <style>
+      body { font-family: sans-serif; margin: 0; display: flex; }
+      .sidebar { width: 250px; background-color: #343a40; color: white; padding: 20px; min-height: 100vh; }
+      .sidebar a { color: white; text-decoration: none; display: block; padding: 10px 0; margin-bottom: 5px; }
+      .content { flex-grow: 1; padding: 30px; background-color: #f8f9fa; }
+      table { width: 100%; border-collapse: collapse; margin-top: 20px; background-color: white; }
+      th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+      th { background-color: #e9ecef; }
+      .status-Occupied { color: #dc3545; font-weight: bold; }
+      .status-Confirmed { color: #ffc107; font-weight: bold; }
+    </style>
+  </head>
+  <body>
+    <div class="sidebar">
+        <h3>Khách sạn A</h3>
+        <hr style="border-color: #495057;">
+        <a href="{% url 'dashboard' %}">Dashboard/Sơ đồ phòng</a>
+        <a href="{% url 'reservation-calendar' %}" style="background-color: #495057;">Lịch Đặt phòng</a>
+        <a href="#">Quản lý Dịch vụ</a>
+        <a href="{% url 'manage-requests' %}">Quản lý Yêu cầu (QR)</a>
+        <a href="{% url 'export-registry' %}">Xuất File Tạm Trú</a>
+        <hr style="border-color: #495057;">
+        <a href="{% url 'logout' %}" style="background-color: #dc3545;">Đăng xuất ({{ user.username }})</a>
+    </div>
+
+    <div class="content">
+      <h2>{{ page_title }}</h2>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Phòng</th>
+            <th>Khách hàng</th>
+            <th>Trạng thái</th>
+            <th>Check-in</th>
+            <th>Check-out Dự kiến</th>
+            <th>Ghi chú</th>
+            <th>Hành động</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for res in reservations %}
+          <tr>
+            <td>P. **{{ res.room.room_number }}**</td>
+            <td>{{ res.guest.full_name }}</td>
+            <td class="status-{{ res.status }}">
+                {{ res.get_status_display }}
+            </td>
+            <td>{{ res.check_in_date|date:"H:i d/m/Y" }}</td>
+            <td>
+                {% if res.check_out_date %}
+                    {{ res.check_out_date|date:"H:i d/m/Y" }}
+                {% else %}
+                    (Chưa xác định)
+                {% endif %}
+            </td>
+            <td>{{ res.note|default:"---" }}</td>
+            <td>
+                {% if res.status == 'Confirmed' %}
+                    <a href="{% url 'perform-check-in' res.id %}" style="color: #007bff;">Check-in</a>
+                {% elif res.status == 'Occupied' %}
+                    <a href="{% url 'perform-check-out' res.id %}" style="color: #dc3545;">Check-out</a> | 
+                    <a href="{% url 'manage-room-services' res.id %}" style="color: #28a745;">Dịch vụ</a>
+                {% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="7">Không có Booking hoặc khách đang ở nào.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </body>
+</html>

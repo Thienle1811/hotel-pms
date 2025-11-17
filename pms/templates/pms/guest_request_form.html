@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Yêu cầu Dịch vụ Phòng {{ room.room_number }}</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        background-color: #f0f2f5;
+      }
+      .form-container {
+        background-color: white;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        width: 100%;
+        max-width: 400px;
+      }
+      h2 { color: #007bff; border-bottom: 2px solid #ccc; padding-bottom: 10px; margin-bottom: 20px; }
+      textarea { width: 100%; padding: 10px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; resize: vertical; min-height: 100px; margin-top: 10px; }
+      button { background-color: #28a745; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; width: 100%; margin-top: 15px; }
+      .guest-info { font-weight: bold; margin-bottom: 20px; color: #555; }
+    </style>
+  </head>
+  <body>
+    <div class="form-container">
+      <h2>Phòng {{ room.room_number }}: Yêu cầu Dịch vụ</h2>
+      <div class="guest-info">Chào mừng, {{ guest_name }}!</div>
+      
+      <form method="POST">
+        {% csrf_token %}
+        <label for="content">Nội dung yêu cầu:</label>
+        <textarea name="content" id="content" required placeholder="Ví dụ: Xin thêm khăn tắm, hỏng TV, gọi món Bữa sáng..."></textarea>
+        
+        <button type="submit">Gửi Yêu cầu</button>
+      </form>
+    </div>
+  </body>
+</html>
