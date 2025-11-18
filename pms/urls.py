@@ -9,11 +9,13 @@ urlpatterns = [
     
     # DASHBOARD - Trang chủ
     path('', views.dashboard, name='dashboard'), 
+
+    path('guests/', views.manage_guests, name='manage-guests'),
     
     # QUẢN LÝ PHÒNG VÀ QR CODE
     path('rooms/manage/', views.manage_rooms, name='manage-rooms'),
     path('rooms/edit/<int:room_id>/', views.room_edit, name='room-edit'),
-    path('rooms/qr/<int:room_id>/', views.room_qr_code, name='room-qr-code'), # ĐƯỜNG DẪN XEM QR
+    path('rooms/qr/<int:room_id>/', views.room_qr_code, name='room-qr-code'), 
     
     # CHỨC NĂNG NGHIỆP VỤ CHÍNH
     path('room/<int:room_id>/booking/', views.create_booking, name='create-booking'),

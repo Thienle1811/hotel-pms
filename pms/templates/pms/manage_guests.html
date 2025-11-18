@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <title>{{ page_title }}</title>
+    <style>
+      body { font-family: sans-serif; margin: 0; display: flex; }
+      .sidebar { width: 250px; background-color: #343a40; color: white; padding: 20px; min-height: 100vh; }
+      .sidebar a { color: white; text-decoration: none; display: block; padding: 10px 0; margin-bottom: 5px; }
+      .content { flex-grow: 1; padding: 30px; background-color: #f8f9fa; }
+      h2 { color: #333; margin-bottom: 20px; }
+      table { width: 100%; border-collapse: collapse; margin-top: 20px; background-color: white; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); }
+      th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+      th { background-color: #e9ecef; }
+      .search-bar { margin-bottom: 20px; }
+      .search-bar input { padding: 8px; border: 1px solid #ccc; border-radius: 4px; width: 300px; }
+      .search-bar button { padding: 8px 15px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+      .logout-link { background-color: #dc3545; text-align: center; border-radius: 5px; margin-top: 20px; }
+    </style>
+  </head>
+  <body>
+    <div class="sidebar">
+        <h3>Khách sạn A</h3>
+        <hr style="border-color: #495057;">
+        <a href="{% url 'dashboard' %}">Dashboard</a>
+        <a href="{% url 'manage-rooms' %}">Sơ đồ/Quản lý Phòng</a>
+        <a href="{% url 'reservation-calendar' %}">Lịch Đặt phòng</a>
+        <a href="{% url 'manage-guests' %}" style="background-color: #495057;">Quản lý Khách hàng</a>
+        <a href="{% url 'manage-service-inventory' %}">Quản lý Dịch vụ</a>
+        <a href="{% url 'manage-requests' %}">Quản lý Yêu cầu (QR)</a>
+        <a href="{% url 'export-registry' %}">Xuất File Tạm Trú</a>
+        <hr style="border-color: #495057;">
+        <a href="{% url 'logout' %}" class="logout-link">Đăng xuất ({{ user.username }})</a>
+    </div>
+
+    <div class="content">
+      <h2>{{ page_title }}</h2>
+      
+      <div class="search-bar">
+        <form method="GET">
+          <input type="text" name="q" placeholder="Tìm kiếm theo Tên, CCCD hoặc SĐT..." value="{{ search_query|default:'' }}">
+          <button type="submit">Tìm kiếm</button>
+        </form>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Họ và Tên</th>
+            <th>Mã số giấy tờ</th>
+            <th>Loại giấy tờ</th>
+            <th>Ngày sinh</th>
+            <th>Địa chỉ thường trú</th>
+            <th>Số điện thoại</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for guest in guests %}
+          <tr>
+            <td><strong>{{ guest.full_name }}</strong></td>
+            <td>{{ guest.id_number }}</td>
+            <td>{{ guest.get_id_type_display }}</td>
+            <td>{{ guest.dob|date:"d/m/Y"|default:"---" }}</td>
+            <td>{{ guest.address }}</td>
+            <td>{{ guest.phone|default:"---" }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="6">Không tìm thấy khách hàng nào.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </body>
+</html>

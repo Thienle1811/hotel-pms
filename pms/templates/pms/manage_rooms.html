@@ -13,16 +13,14 @@
       h2 { color: #333; margin-bottom: 20px; }
       table { width: 100%; border-collapse: collapse; margin-top: 20px; background-color: white; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); }
       th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
-      th { background-color: #e9ecef; color: #333; }
+      th { background-color: #e9ecef; }
       .actions a { color: #007bff; text-decoration: none; margin-right: 10px; }
       .actions a:hover { text-decoration: underline; }
-      
       /* Màu trạng thái */
       .status-Vacant { color: #28a745; font-weight: bold; }
       .status-Dirty { color: #6c757d; font-weight: bold; }
       .status-Occupied { color: #dc3545; font-weight: bold; }
       .status-Booked { color: #ffc107; font-weight: bold; }
-
       /* Cập nhật cho Menu */
       .logout-link { background-color: #dc3545; text-align: center; border-radius: 5px; margin-top: 20px; }
     </style>
@@ -34,7 +32,7 @@
       <a href="{% url 'dashboard' %}">Dashboard</a> 
       <a href="{% url 'manage-rooms' %}" style="background-color: #495057;">Sơ đồ/Quản lý Phòng</a> 
       <a href="{% url 'reservation-calendar' %}">Lịch Đặt phòng</a> 
-      <a href="{% url 'manage-service-inventory' %}">Quản lý Dịch vụ</a>
+      <a href="{% url 'manage-guests' %}">Quản lý Khách hàng</a> <a href="{% url 'manage-service-inventory' %}">Quản lý Dịch vụ</a> 
       <a href="{% url 'manage-requests' %}">Quản lý Yêu cầu (QR)</a>
       <a href="{% url 'export-registry' %}">Xuất File Tạm Trú</a>
       <hr style="border-color: #495057;">

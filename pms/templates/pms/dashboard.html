@@ -14,7 +14,7 @@
         min-height: 100vh;
         box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
       }
-      .sidebar h3 { margin-top: 0; }
+      .sidebar h3 { margin-top: 0; border-bottom: 1px solid #495057; padding-bottom: 10px; }
       .sidebar a {
         color: white;
         text-decoration: none;
@@ -103,10 +103,11 @@
     <div class="sidebar">
       <h3>Khách sạn A</h3>
       <hr style="border-color: #495057;">
-      <a href="{% url 'dashboard' %}">Dashboard</a> 
+      <a href="{% url 'dashboard' %}" style="background-color: #495057;">Dashboard</a> 
       <a href="{% url 'manage-rooms' %}">Sơ đồ/Quản lý Phòng</a> 
       <a href="{% url 'reservation-calendar' %}">Lịch Đặt phòng</a> 
-      <a href="{% url 'manage-service-inventory' %}">Quản lý Dịch vụ</a> <a href="{% url 'manage-requests' %}">Quản lý Yêu cầu (QR)</a>
+      <a href="{% url 'manage-guests' %}">Quản lý Khách hàng</a> <a href="{% url 'manage-service-inventory' %}">Quản lý Dịch vụ</a> 
+      <a href="{% url 'manage-requests' %}">Quản lý Yêu cầu (QR)</a>
       <a href="{% url 'export-registry' %}">Xuất File Tạm Trú</a>
       <hr style="border-color: #495057;">
       <a href="{% url 'logout' %}" class="logout-link">Đăng xuất ({{ user.username }})</a>
@@ -121,6 +122,14 @@
             {{ message }}
           </div>
         {% endfor %}
+      {% endif %}
+      
+      {% if not room_data %}
+      <div style="padding: 20px; background-color: #fff3cd; border: 1px solid #ffeeba; color: #856404; border-radius: 5px;">
+          <h3>⚠️ Chưa có dữ liệu phòng</h3>
+          <p>Vui lòng tạo Khách sạn và 7 Phòng trong trang Admin, sau đó Refresh trang này.</p>
+          <a href="{% url 'manage-rooms' %}" style="color: #007bff; font-weight: bold;">Tạo phòng ngay</a>
+      </div>
       {% endif %}
 
       <div class="room-grid">
@@ -155,11 +164,9 @@
                     <a href="#">Hủy Booking</a>
                 {% elif data.room.status == 'Occupied' %}
                     <a href="{% url 'manage-room-services' data.reservation.id %}">Thêm Dịch vụ</a> 
-                    <a href="{% url 'billing-details' data.reservation.id %}" class="quick-action-button">Check-out (Hóa đơn)</a> {% endif %}
+                    <a href="{% url 'billing-details' data.reservation.id %}" class="quick-action-button">Check-out (Hóa đơn)</a>
+                {% endif %}
             </div>
         </div>
         {% endfor %}
       </div>
-    </div>
-  </body>
-</html>

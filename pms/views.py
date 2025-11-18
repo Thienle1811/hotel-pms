@@ -611,3 +611,26 @@ def room_qr_code(request, room_id):
         'full_request_url': full_request_url 
     }
     return render(request, 'pms/room_qr_code.html', context)
+
+@login_required
+def manage_guests(request):
+    """
+    Hiển thị danh sách khách hàng đã lưu trữ, có chức năng tìm kiếm cơ bản.
+    """
+    search_query = request.GET.get('q', '')
+    
+    if search_query:
+        guests = Guest.objects.filter(
+            Q(full_name__icontains=search_query) |
+            Q(id_number__icontains=search_query) |
+            Q(phone__icontains=search_query)
+        ).order_by('-created_at')
+    else:
+        guests = Guest.objects.all().order_by('-created_at')
+        
+    context = {
+        'page_title': 'Quản lý Hồ sơ Khách hàng',
+        'guests': guests,
+        'search_query': search_query
+    }
+    return render(request, 'pms/manage_guests.html', context)
