@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <title>{{ page_title }}</title>
+    <style>
+      body { font-family: sans-serif; background-color: #f4f4f4; margin: 0; padding: 20px; }
+      .container { max-width: 600px; margin: 20px auto; background-color: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
+      h2 { border-bottom: 2px solid #ccc; padding-bottom: 10px; margin-bottom: 20px; color: #333; }
+      .form-field { margin-bottom: 15px; }
+      label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; }
+      input, select { width: 100%; padding: 10px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
+      button { padding: 10px 20px; background-color: #007bff; color: white; border: none; cursor: pointer; border-radius: 5px; font-weight: bold; width: 100%; margin-top: 10px; }
+      button:hover { background-color: #0056b3; }
+      .back-link { display: block; text-align: center; margin-top: 15px; color: #dc3545; text-decoration: none; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h2>{{ page_title }}</h2>
+      
+      <form method="POST">
+        {% csrf_token %}
+
+        {% for field in form %}
+          <div class="form-field">
+            {{ field.errors }}
+            <label for="{{ field.id_for_label }}">{{ field.label }}:</label>
+            {{ field }}
+          </div>
+        {% endfor %}
+
+        <button type="submit">Lưu Thay đổi</button>
+        <a href="{% url 'manage-guests' %}" class="back-link">Hủy bỏ & Quay lại</a>
+      </form>
+    </div>
+  </body>
+</html>

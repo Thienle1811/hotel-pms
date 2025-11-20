@@ -78,4 +78,6 @@ urlpatterns = [
     path('api/reservation/<int:reservation_id>/checkout/', api_views.CheckoutAPIView.as_view(), name='api-checkout'),
     path('api/reservation/<int:reservation_id>/checkin/', api_views.CheckinAPIView.as_view(), name='api-checkin'),
     path('api/room/<int:room_id>/walk-in/', api_views.WalkInCheckinAPIView.as_view(), name='api-walk-in'),
+    path('guests/edit/<int:guest_id>/', views.edit_guest, name='edit-guest'),
+    path('guests/delete/<int:guest_id>/', views.delete_guest, name='delete-guest'),
 ]

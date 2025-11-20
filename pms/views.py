@@ -18,11 +18,12 @@ from .forms import GuestForm, ReservationForm, ServiceChargeForm, ServiceItemFor
 # Form sửa đổi nhanh thông tin Room
 RoomEditForm = modelform_factory(
     Room, 
-    fields=('room_number', 'room_type', 'price_per_night'),
+    fields=('room_number', 'room_type', 'price_per_night','status'),
     labels={
         'room_number': 'Số Phòng', 
         'room_type': 'Loại Phòng', 
-        'price_per_night': 'Giá/Đêm (VND)'
+        'price_per_night': 'Giá/Đêm (VND)',
+        'status': 'Trạng thái'
     }
 )
 
@@ -272,7 +273,7 @@ def perform_check_out(request, reservation_id):
     reservation.check_out_date = bill_details['check_out_time']
     reservation.save()
 
-    room.status = 'Dirty'
+    room.status = 'Vacant'
     room.save()
     
     messages.success(request, f"Phòng {room.room_number}: Check-out thành công. Tổng tiền thanh toán: {final_bill:,} VND.")
@@ -639,3 +640,48 @@ def manage_guests(request):
     }
     return render(request, 'pms/manage_guests.html', context)
 
+@login_required
+def edit_guest(request, guest_id):
+    """ 
+    Chức năng chỉnh sửa thông tin khách hàng 
+    """
+    guest = get_object_or_404(Guest, id=guest_id)
+    
+    if request.method == 'POST':
+        form = GuestForm(request.POST, instance=guest)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f"Đã cập nhật thông tin khách hàng {guest.full_name} thành công.")
+            return redirect('manage-guests')
+        else:
+            messages.error(request, "Lỗi cập nhật. Vui lòng kiểm tra lại thông tin.")
+    else:
+        form = GuestForm(instance=guest)
+    
+    context = {
+        'page_title': f"Sửa hồ sơ: {guest.full_name}",
+        'form': form,
+        'guest': guest
+    }
+    return render(request, 'pms/guest_edit_form.html', context)
+
+@login_required
+@transaction.atomic
+def delete_guest(request, guest_id):
+    """
+    Xóa hồ sơ khách hàng
+    """
+    guest = get_object_or_404(Guest, id=guest_id)
+    
+    if request.method == 'POST':
+        # 1. Kiểm tra an toàn: Không xóa khách đang ở
+        if Reservation.objects.filter(guest=guest, status='Occupied').exists():
+            messages.error(request, f"Không thể xóa khách {guest.full_name} vì đang cư trú. Vui lòng Check-out trước.")
+            return redirect('manage-guests')
+            
+        # 2. Thực hiện xóa
+        guest_name = guest.full_name
+        guest.delete()
+        messages.success(request, f"Đã xóa khách hàng {guest_name} và lịch sử liên quan.")
+        
+    return redirect('manage-guests')
