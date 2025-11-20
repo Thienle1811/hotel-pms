@@ -18,7 +18,7 @@ urlpatterns = [
     
     # LOGIN / LOGOUT
     path('login/', LoginView.as_view(template_name='pms/login.html'), name='login'),
-    path('logout/', LogoutView.as_view(), name='logout'), 
+    path('logout/', views.custom_logout, name='logout'),
     
     # DASHBOARD - Trang chủ
     path('', views.dashboard, name='dashboard'), 

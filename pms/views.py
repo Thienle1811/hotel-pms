@@ -8,6 +8,7 @@ from django.db.models import Q
 from django.forms import modelform_factory 
 from django.urls import reverse # Cần cho QR Code
 from urllib.parse import quote # Cần cho mã hóa URL QR Code (FIX)
+from django.contrib.auth import logout
 
 import pandas as pd
 from io import BytesIO
@@ -685,3 +686,11 @@ def delete_guest(request, guest_id):
         messages.success(request, f"Đã xóa khách hàng {guest_name} và lịch sử liên quan.")
         
     return redirect('manage-guests')
+
+
+def custom_logout(request):
+    """
+    Hàm đăng xuất tùy chỉnh cho phép dùng GET request
+    """
+    logout(request)
+    return redirect('login')
