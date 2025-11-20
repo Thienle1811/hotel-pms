@@ -1,8 +1,21 @@
-from django.urls import path
+from django.urls import path, include
 from . import views
+from . import api_views  # Import file api_views mới tạo
 from django.contrib.auth.views import LoginView, LogoutView
+from rest_framework.routers import DefaultRouter  # Import Router của DRF
+from rest_framework.authtoken.views import obtain_auth_token
+
+# --- CẤU HÌNH ROUTER CHO API ---
+# Router sẽ tự động tạo các URL (GET, POST, PUT, DELETE) cho ViewSets
+router = DefaultRouter()
+router.register(r'services', api_views.ServiceItemViewSet)
+router.register(r'guest-requests', api_views.GuestRequestViewSet)
 
 urlpatterns = [
+    # =========================================
+    # PHẦN WEB APP (Cũ - Giữ nguyên)
+    # =========================================
+    
     # LOGIN / LOGOUT
     path('login/', LoginView.as_view(template_name='pms/login.html'), name='login'),
     path('logout/', LogoutView.as_view(), name='logout'), 
@@ -45,4 +58,24 @@ urlpatterns = [
     # QUẢN LÝ GIAO DỊCH DỊCH VỤ (GẮN VỚI PHÒNG)
     path('reservation/<int:reservation_id>/services/', views.manage_room_services, name='manage-room-services'),
     path('reservation/<int:reservation_id>/services/add/', views.add_service_charge, name='add-service-charge'),
+
+    # =========================================
+    # PHẦN API CHO ANDROID APP (Mới thêm)
+    # =========================================
+    
+    # Bao gồm các URL tự động sinh ra từ Router (services/, guest-requests/)
+    path('api/', include(router.urls)),
+    
+    # API Dashboard (Trả về JSON danh sách phòng)
+    path('api/dashboard/', api_views.DashboardAPIView.as_view(), name='api-dashboard'),
+    
+    # API Chi tiết phòng
+    path('api/room/<int:room_id>/', api_views.RoomDetailAPIView.as_view(), name='api-room-detail'),
+
+    path('api/login/', obtain_auth_token, name='api_token_auth'),
+
+    path('api/add-service/', api_views.AddServiceChargeAPIView.as_view(), name='api-add-service'),
+    path('api/reservation/<int:reservation_id>/checkout/', api_views.CheckoutAPIView.as_view(), name='api-checkout'),
+    path('api/reservation/<int:reservation_id>/checkin/', api_views.CheckinAPIView.as_view(), name='api-checkin'),
+    path('api/room/<int:room_id>/walk-in/', api_views.WalkInCheckinAPIView.as_view(), name='api-walk-in'),
 ]

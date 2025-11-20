@@ -52,25 +52,54 @@
 
       <div class="service-form-container">
         <h3>Thêm Dịch vụ/Sản phẩm</h3>
+
+        <div style="margin-bottom: 15px; padding: 10px; background-color: #e9ecef; border-radius: 4px;">
+            <label style="font-weight: bold;">⭐ Chọn nhanh từ Thực đơn:</label>
+            <select id="quick-select" onchange="selectService()" style="width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px;">
+                <option value="">-- Chọn món để tự điền --</option>
+                {% for item in inventory_items %}
+                    <option value="{{ item.item_name }}" data-price="{{ item.price|floatformat:0 }}">
+                        {{ item.item_name }} - {{ item.price|floatformat:0 }} VND
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
         <form action="{% url 'add-service-charge' reservation.id %}" method="POST" style="display: flex; gap: 10px; align-items: flex-end;">
             {% csrf_token %}
             
             <div class="form-field" style="flex: 3;">
-                <label for="{{ service_form.item_name.id_for_label }}">Tên Dịch vụ:</label>
+                <label for="id_item_name">Tên Dịch vụ:</label>
                 {{ service_form.item_name }}
             </div>
             <div class="form-field" style="flex: 1;">
-                <label for="{{ service_form.quantity.id_for_label }}">Số lượng:</label>
+                <label for="id_quantity">Số lượng:</label>
                 {{ service_form.quantity }}
             </div>
             <div class="form-field" style="flex: 2;">
-                <label for="{{ service_form.price.id_for_label }}">Đơn giá:</label>
+                <label for="id_price">Đơn giá:</label>
                 {{ service_form.price }}
             </div>
             
             <button type="submit" style="flex: 1; height: 38px;">Thêm</button>
         </form>
       </div>
+
+      <script>
+        function selectService() {
+            var selectBox = document.getElementById("quick-select");
+            var selectedOption = selectBox.options[selectBox.selectedIndex];
+
+            if (selectedOption.value !== "") {
+                // Tự động điền tên món vào ô nhập liệu của Django Form
+                document.getElementById("id_item_name").value = selectedOption.value;
+                
+                // Tự động điền giá tiền (loại bỏ dấu chấm/phẩy nếu có để đảm bảo format số)
+                var price = selectedOption.getAttribute("data-price");
+                document.getElementById("id_price").value = price.replace(/,/g, '').replace(/\./g, '');
+            }
+        }
+      </script>
       
       <h3>Danh sách Phí Dịch vụ Đã Ghi nhận</h3>
       <table>

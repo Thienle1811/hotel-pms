@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <title>{{ page_title }}</title>
+    <style>
+      body { font-family: sans-serif; background-color: #f4f4f4; margin: 0; padding: 20px; }
+      .container { max-width: 500px; margin: 20px auto; background-color: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
+      h2 { border-bottom: 2px solid #ccc; padding-bottom: 10px; margin-bottom: 20px; color: #333; }
+      .form-field { margin-bottom: 15px; }
+      label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; }
+      input { width: 100%; padding: 10px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
+      button { padding: 10px 20px; background-color: #28a745; color: white; border: none; cursor: pointer; border-radius: 5px; font-weight: bold; width: 100%; margin-top: 10px; }
+      button:hover { background-color: #218838; }
+      .back-link { display: block; text-align: center; margin-top: 15px; color: #6c757d; text-decoration: none; }
+      .back-link:hover { text-decoration: underline; }
+      .errorlist { color: red; list-style: none; padding: 0; margin-bottom: 10px; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h2>{{ page_title }}</h2>
+      
+      <form method="POST">
+        {% csrf_token %}
+        
+        {% if form.errors %}
+          <ul class="errorlist">
+            {% for field in form %}
+              {% for error in field.errors %}
+                <li>{{ error }}</li>
+              {% endfor %}
+            {% endfor %}
+          </ul>
+        {% endif %}
+
+        <div class="form-field">
+          <label for="{{ form.item_name.id_for_label }}">Tên Dịch vụ/Sản phẩm:</label>
+          {{ form.item_name }}
+        </div>
+
+        <div class="form-field">
+          <label for="{{ form.price.id_for_label }}">Đơn giá (VND):</label>
+          {{ form.price }}
+        </div>
+
+        <button type="submit">Lưu Dịch Vụ</button>
+        <a href="{% url 'manage-service-inventory' %}" class="back-link">Hủy bỏ & Quay lại</a>
+      </form>
+    </div>
+  </body>
+</html>

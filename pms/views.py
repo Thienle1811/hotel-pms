@@ -416,6 +416,9 @@ def manage_room_services(request, reservation_id):
     service_charges = ServiceCharge.objects.filter(reservation=reservation).order_by('-created_at')
     service_form = ServiceChargeForm()
     
+    # 👇 THÊM DÒNG NÀY: Lấy danh sách thực đơn từ kho
+    inventory_items = ServiceItem.objects.all().order_by('item_name')
+    
     total_service_cost = sum(charge.total_price for charge in service_charges)
     
     context = {
@@ -424,7 +427,8 @@ def manage_room_services(request, reservation_id):
         'reservation': reservation,
         'service_charges': service_charges,
         'service_form': service_form,
-        'total_service_cost': total_service_cost
+        'total_service_cost': total_service_cost,
+        'inventory_items': inventory_items, # 👇 Đừng quên gửi biến này sang template
     }
     return render(request, 'pms/manage_room_services.html', context)
 
@@ -634,3 +638,4 @@ def manage_guests(request):
         'search_query': search_query
     }
     return render(request, 'pms/manage_guests.html', context)
+

@@ -20,11 +20,7 @@ DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
 
 # CẤU HÌNH ALLOWED_HOSTS
-ALLOWED_HOSTS = [
-    '127.0.0.1', 
-    'localhost', 
-    'tên_user_của_bạn.pythonanywhere.com' # Thay thế bằng domain thực tế
-]
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -40,6 +36,8 @@ INSTALLED_APPS = [
     
     # Ứng dụng quản lý khách sạn của bạn
     'pms', 
+    'rest_framework',
+    'rest_framework.authtoken',
 ]
 
 MIDDLEWARE = [
