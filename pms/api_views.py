@@ -191,7 +191,7 @@ class CheckoutAPIView(APIView):
         reservation.save()
 
         # Cập nhật Phòng -> Chuyển sang 'Dirty' để dọn dẹp
-        room.status = 'Dirty' 
+        room.status = 'Vacant' 
         room.save()
 
         return Response({"message": f"Đã trả phòng {room.room_number} thành công. Tổng thu: {request.data.get('final_bill', 0)}"})
@@ -227,54 +227,51 @@ class WalkInCheckinAPIView(APIView):
     def post(self, request, room_id):
         room = get_object_or_404(Room, id=room_id)
         
+        # Cho phép check-in nếu phòng Trống hoặc Dơ (phòng trường hợp chưa kịp dọn trên hệ thống)
         if room.status != 'Vacant' and room.status != 'Dirty':
-            return Response({"error": "Phòng này không trống."}, status=400)
+            return Response({"error": "Phòng này đang có khách."}, status=400)
 
-        # 1. Lấy dữ liệu từ App gửi lên (Thêm dob)
         full_name = request.data.get('full_name')
         id_number = request.data.get('id_number')
         phone = request.data.get('phone', '')
-        dob = request.data.get('dob') # <--- THÊM DÒNG NÀY
+        dob = request.data.get('dob')
+        address = request.data.get('address', '') # <--- THÊM DÒNG NÀY
 
-        # Kiểm tra dữ liệu bắt buộc
         if not full_name or not id_number:
-            return Response({"error": "Vui lòng nhập Tên và Số giấy tờ tùy thân."}, status=400)
+            return Response({"error": "Thiếu tên hoặc số giấy tờ."}, status=400)
 
         try:
             with transaction.atomic():
-                # 2. Tạo hoặc Lấy thông tin khách hàng
                 guest, created = Guest.objects.get_or_create(
                     id_number=id_number,
                     defaults={
                         'full_name': full_name,
                         'phone': phone,
-                        'dob': dob if dob else None, # <--- THÊM DÒNG NÀY
-                        'address': 'Khách vãng lai (App)',
+                        'dob': dob if dob else None,
+                        'address': address if address else 'Khách vãng lai', # <--- LƯU ĐỊA CHỈ
                         'id_type': 'CCCD'
                     }
                 )
                 
-                # Nếu khách đã có trong hệ thống, cập nhật thông tin mới nhất
                 if not created:
                     guest.full_name = full_name
                     guest.phone = phone
-                    if dob: guest.dob = dob # <--- Cập nhật ngày sinh nếu có
+                    if dob: guest.dob = dob
+                    if address: guest.address = address # <--- Cập nhật địa chỉ nếu có
                     guest.save()
 
-                # 3. Tạo Reservation mới
                 Reservation.objects.create(
                     room=room,
                     guest=guest,
                     check_in_date=timezone.now(),
                     status='Occupied',
-                    note='Check-in trực tiếp qua App'
+                    note='Check-in tại quầy (App)'
                 )
 
-                # 4. Cập nhật trạng thái phòng
                 room.status = 'Occupied'
                 room.save()
 
-            return Response({"message": f"Đã check-in thành công phòng {room.room_number}"})
+            return Response({"message": f"Check-in thành công phòng {room.room_number}"})
             
         except Exception as e:
             return Response({"error": str(e)}, status=500)
