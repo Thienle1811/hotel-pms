@@ -2,42 +2,132 @@
 <html lang="vi">
   <head>
     <meta charset="UTF-8" />
-    <title>Yêu cầu Dịch vụ Phòng {{ room.room_number }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dịch vụ Phòng {{ room.room_number }}</title>
     <style>
       body {
-        font-family: sans-serif;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        background-color: #f0f2f5;
+        margin: 0;
+        padding: 20px;
         display: flex;
         justify-content: center;
-        align-items: center;
-        min-height: 100vh;
-        background-color: #f0f2f5;
       }
-      .form-container {
+      .container {
         background-color: white;
-        padding: 30px;
-        border-radius: 10px;
+        padding: 20px;
+        border-radius: 15px;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         width: 100%;
         max-width: 400px;
       }
-      h2 { color: #007bff; border-bottom: 2px solid #ccc; padding-bottom: 10px; margin-bottom: 20px; }
-      textarea { width: 100%; padding: 10px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; resize: vertical; min-height: 100px; margin-top: 10px; }
-      button { background-color: #28a745; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; width: 100%; margin-top: 15px; }
-      .guest-info { font-weight: bold; margin-bottom: 20px; color: #555; }
+      h2 { color: #007bff; text-align: center; margin-bottom: 5px; }
+      .room-info { text-align: center; color: #666; margin-bottom: 20px; font-weight: bold;}
+      
+      /* Style cho lưới nút bấm */
+      .action-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+        margin-bottom: 25px;
+      }
+      
+      .action-btn {
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 10px;
+        padding: 15px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100px;
+      }
+      
+      .action-btn:active { background-color: #e2e6ea; transform: scale(0.98); }
+      .action-btn i { font-size: 24px; margin-bottom: 8px; display: block; }
+      .action-btn span { font-weight: bold; color: #333; font-size: 14px; }
+      
+      /* Màu sắc riêng cho từng nút */
+      .btn-laundry { border-color: #17a2b8; color: #17a2b8; }
+      .btn-food { border-color: #ffc107; color: #ffc107; }
+      .btn-car { border-color: #28a745; color: #28a745; }
+      .btn-conf { border-color: #6f42c1; color: #6f42c1; }
+      .btn-party { border-color: #e83e8c; color: #e83e8c; }
+
+      /* Form nhập tay cũ */
+      .manual-form { border-top: 1px solid #eee; padding-top: 20px; }
+      label { font-weight: bold; display: block; margin-bottom: 8px; }
+      textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px; resize: vertical; min-height: 80px; box-sizing: border-box; }
+      .submit-btn { background-color: #007bff; color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; width: 100%; margin-top: 10px; font-weight: bold; font-size: 16px; }
     </style>
   </head>
   <body>
-    <div class="form-container">
-      <h2>Phòng {{ room.room_number }}: Yêu cầu Dịch vụ</h2>
-      <div class="guest-info">Chào mừng, {{ guest_name }}!</div>
+    <div class="container">
+      <h2>Phòng {{ room.room_number }}</h2>
+      <div class="room-info">Xin chào, {{ guest_name }}!</div>
       
-      <form method="POST">
-        {% csrf_token %}
-        <label for="content">Nội dung yêu cầu:</label>
-        <textarea name="content" id="content" required placeholder="Ví dụ: Xin thêm khăn tắm, hỏng TV, gọi món Bữa sáng..."></textarea>
-        
-        <button type="submit">Gửi Yêu cầu</button>
-      </form>
+      <div class="action-grid">
+        <div class="action-btn btn-laundry" onclick="handleLaundry()">
+            <span style="font-size: 30px;">👕</span>
+            <span>Ủi đồ</span>
+        </div>
+
+        <div class="action-btn btn-food" onclick="submitQuickRequest('Đặt Nước/Đồ ăn')">
+            <span style="font-size: 30px;">🍔</span>
+            <span>Đặt Đồ ăn</span>
+        </div>
+
+        <div class="action-btn btn-car" onclick="submitQuickRequest('Đặt Xe')">
+            <span style="font-size: 30px;">🚖</span>
+            <span>Đặt Xe</span>
+        </div>
+
+        <div class="action-btn btn-conf" onclick="submitQuickRequest('Đặt Hội nghị')">
+            <span style="font-size: 30px;">💼</span>
+            <span>Hội nghị</span>
+        </div>
+
+        <div class="action-btn btn-party" style="grid-column: span 2;" onclick="submitQuickRequest('Đặt Tiệc')">
+            <span style="font-size: 30px;">🎉</span>
+            <span>Đặt Tiệc</span>
+        </div>
+      </div>
+
+      <div class="manual-form">
+        <form method="POST" id="mainForm">
+            {% csrf_token %}
+            <label for="content">Yêu cầu khác:</label>
+            <textarea name="content" id="content" placeholder="Ví dụ: Xin thêm khăn, hỏng điều hòa..."></textarea>
+            <button type="submit" class="submit-btn">Gửi Yêu cầu</button>
+        </form>
+      </div>
     </div>
+
+    <form method="POST" id="hiddenForm" style="display: none;">
+        {% csrf_token %}
+        <input type="hidden" name="content" id="hiddenContent">
+    </form>
+
+    <script>
+        // 1. Xử lý nút Ủi đồ (Chỉ hiện thông báo)
+        function handleLaundry() {
+            alert("👔 DỊCH VỤ ỦI ĐỒ MIỄN PHÍ\n\nVui lòng mang trang phục đến Quầy Lễ tân, nhân viên sẽ hỗ trợ bạn ngay lập tức.");
+        }
+
+        // 2. Xử lý các nút còn lại (Gửi về Server)
+        function submitQuickRequest(serviceName) {
+            if (confirm("Bạn muốn gửi yêu cầu: " + serviceName + "?")) {
+                // Điền nội dung vào form ẩn
+                document.getElementById('hiddenContent').value = "Khách muốn: " + serviceName;
+                
+                // Submit form
+                document.getElementById('hiddenForm').submit();
+            }
+        }
+    </script>
   </body>
 </html>

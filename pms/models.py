@@ -52,7 +52,7 @@ class Guest(models.Model):
     ]
     id_type = models.CharField(max_length=10, choices=ID_TYPE_CHOICES, default='CCCD', verbose_name="Loại giấy tờ")
     id_number = models.CharField(max_length=50, unique=True, verbose_name="Mã số giấy tờ") # Mã số giấy tờ (Key cho OCR)
-    
+    license_plate = models.CharField(max_length=20, null=True, blank=True, verbose_name="Biển số xe")
     address = models.CharField(max_length=500, verbose_name="Địa chỉ thường trú")
     phone = models.CharField(max_length=20, null=True, blank=True, verbose_name="Số điện thoại")
     
@@ -150,3 +150,30 @@ class ServiceItem(models.Model):
     class Meta:
         verbose_name = "7. Danh mục Dịch vụ"
         verbose_name_plural = "7. Quản lý Danh mục Dịch vụ"
+
+class StaffSchedule(models.Model):
+    ROLE_CHOICES = [
+        ('Reception', 'Lễ tân'),
+        ('Housekeeping', 'Buồng phòng'),
+        ('Guard', 'Bảo vệ'),
+    ]
+    
+    SHIFT_CHOICES = [
+        ('Morning', 'Ca Sáng (6h-14h)'),
+        ('Afternoon', 'Ca Chiều (14h-22h)'),
+        ('Night', 'Ca Đêm (22h-6h)'),
+    ]
+
+    staff_name = models.CharField(max_length=100, verbose_name="Tên Nhân viên")
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, verbose_name="Vị trí")
+    date = models.DateField(verbose_name="Ngày làm việc")
+    shift = models.CharField(max_length=20, choices=SHIFT_CHOICES, verbose_name="Ca làm việc")
+    note = models.TextField(blank=True, null=True, verbose_name="Ghi chú")
+
+    def __str__(self):
+        return f"{self.staff_name} - {self.get_shift_display()} ({self.date})"
+
+    class Meta:
+        verbose_name = "8. Lịch làm việc"
+        verbose_name_plural = "8. Quản lý Lịch làm việc"
+        ordering = ['-date', 'shift']

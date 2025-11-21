@@ -12,23 +12,19 @@
       input, select { width: 100%; padding: 10px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
       
       /* Nút lưu chính */
-      .btn-save { padding: 10px 20px; background-color: #007bff; color: white; border: none; cursor: pointer; border-radius: 5px; font-weight: bold; width: 100%; margin-top: 10px; }
-      .btn-save:hover { background-color: #0056b3; }
+      .btn-save { padding: 10px 20px; background-color: #28a745; color: white; border: none; cursor: pointer; border-radius: 5px; font-weight: bold; width: 100%; margin-top: 10px; }
+      .btn-save:hover { background-color: #218838; }
 
       /* Link quay lại */
       .back-link { display: block; text-align: center; margin-top: 15px; color: #6c757d; text-decoration: none; }
       .back-link:hover { text-decoration: underline; }
-
-      /* Vùng xóa phòng */
-      .delete-zone { margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; }
-      .delete-title { color: #dc3545; font-size: 0.9em; font-weight: bold; margin-bottom: 10px; display: block;}
-      .btn-delete { background-color: #dc3545; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%; }
-      .btn-delete:hover { background-color: #c82333; }
+      
+      .errorlist { color: #dc3545; list-style: none; padding: 0; }
     </style>
   </head>
   <body>
     <div class="container">
-      <h2>Sửa đổi Cấu hình Phòng {{ room.room_number }}</h2>
+      <h2>Thêm Phòng Mới</h2>
       
       {% if messages %}
           {% for message in messages %}
@@ -49,21 +45,9 @@
           </div>
         {% endfor %}
 
-        <button type="submit" class="btn-save">Lưu Cấu hình</button>
+        <button type="submit" class="btn-save">Tạo Phòng</button>
         <a href="{% url 'manage-rooms' %}" class="back-link">Hủy bỏ & Quay lại</a>
       </form>
-
-      <div class="delete-zone">
-          <span class="delete-title">⚠️ XÓA PHÒNG NÀY</span>
-          <p style="font-size: 0.85em; color: #666; margin-bottom: 10px;">
-              Hành động này sẽ xóa phòng vĩnh viễn và không thể khôi phục.
-          </p>
-          <form action="{% url 'delete-room' room.id %}" method="POST" onsubmit="return confirm('CẢNH BÁO QUAN TRỌNG:\n\nBạn đang thực hiện xóa Phòng {{ room.room_number }}.\n\nHành động này không thể hoàn tác.\nBạn có chắc chắn muốn tiếp tục không?');">
-              {% csrf_token %}
-              <button type="submit" class="btn-delete">Xóa Phòng {{ room.room_number }}</button>
-          </form>
-      </div>
-
     </div>
   </body>
 </html>

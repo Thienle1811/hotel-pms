@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -8,31 +9,72 @@
         font-family: sans-serif;
         display: grid;
         place-items: center;
-        min-height: 90vh;
+        min-height: 100vh;
+        margin: 0;
+        background-color: #f4f4f4;
+        position: relative; /* Để định vị logo chìm */
+        overflow: hidden; /* Ẩn phần logo bị tràn ra ngoài */
       }
+
+      /* --- LOGO CHÌM PHÍA SAU --- */
+      .background-logo {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 1100px; /* Kích thước logo */
+        height: 600px;
+        
+        /* Sử dụng thẻ static của Django để gọi file */
+        background-image: url("{% static 'pms/images/logo.png' %}");
+        
+        background-repeat: no-repeat;
+        background-position: center;
+        background-size: contain;
+        opacity: 0.5; /* Độ mờ của logo (0.1 là mờ, 1.0 là rõ) */
+        z-index: 0; /* Nằm dưới form */
+        pointer-events: none; /* Không chặn click chuột */
+      }
+
       form {
+        position: relative; /* Để nổi lên trên logo */
+        z-index: 1;
         border: 1px solid #ccc;
-        padding: 20px;
+        padding: 30px;
         border-radius: 8px;
-        background-color: white;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        /* Nền trắng hơi trong suốt để tách biệt với logo */
+        background-color: rgba(255, 255, 255, 0.95); 
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        width: 350px;
       }
+
+      h2 {
+        text-align: center;
+        color: #333;
+        margin-bottom: 20px;
+      }
+
       div {
         margin-bottom: 15px;
       }
+
       label {
         display: block;
         margin-bottom: 5px;
         font-weight: bold;
+        color: #555;
       }
+
       input {
-        width: 300px;
+        width: 100%;
         padding: 10px;
         border: 1px solid #ccc;
         border-radius: 4px;
         box-sizing: border-box;
       }
+
       button {
+        width: 100%;
         padding: 10px 15px;
         background-color: #007bff;
         color: white;
@@ -40,19 +82,38 @@
         cursor: pointer;
         border-radius: 4px;
         font-weight: bold;
+        font-size: 16px;
+        margin-top: 10px;
       }
+
       button:hover {
           background-color: #0056b3;
+      }
+      
+      .error-msg {
+          color: #dc3545;
+          background-color: #f8d7da;
+          border: 1px solid #f5c6cb;
+          padding: 10px;
+          border-radius: 4px;
+          margin-bottom: 15px;
+          font-size: 0.9em;
+          text-align: center;
       }
     </style>
   </head>
   <body>
+    
+    <div class="background-logo"></div>
+
     <form method="post">
       {% csrf_token %}
-      <h2>Đăng nhập Hệ thống Quản lý Khách sạn</h2>
+      <h2>Đăng nhập Hệ thống</h2>
 
       {% if form.errors %}
-      <p style="color: red">Tên đăng nhập hoặc mật khẩu không đúng!</p>
+      <div class="error-msg">
+          Tên đăng nhập hoặc mật khẩu không đúng!
+      </div>
       {% endif %}
 
       <div>
@@ -64,7 +125,6 @@
         {{ form.password }}
       </div>
       <button type="submit">Đăng nhập</button>
-      <!-- Hidden field để chuyển hướng người dùng sau khi đăng nhập thành công -->
       <input type="hidden" name="next" value="{{ next }}" />
     </form>
   </body>

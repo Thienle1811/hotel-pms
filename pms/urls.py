@@ -27,6 +27,7 @@ urlpatterns = [
     
     # QUẢN LÝ PHÒNG VÀ QR CODE
     path('rooms/manage/', views.manage_rooms, name='manage-rooms'),
+    path('rooms/add/', views.room_create, name='room-create'),
     path('rooms/edit/<int:room_id>/', views.room_edit, name='room-edit'),
     path('rooms/qr/<int:room_id>/', views.room_qr_code, name='room-qr-code'), 
     
@@ -80,4 +81,6 @@ urlpatterns = [
     path('api/room/<int:room_id>/walk-in/', api_views.WalkInCheckinAPIView.as_view(), name='api-walk-in'),
     path('guests/edit/<int:guest_id>/', views.edit_guest, name='edit-guest'),
     path('guests/delete/<int:guest_id>/', views.delete_guest, name='delete-guest'),
+    path('rooms/delete/<int:room_id>/', views.delete_room, name='delete-room'),
+    path('management/', views.management_dashboard, name='management-dashboard'),
 ]

@@ -101,13 +101,14 @@
   </head>
   <body>
     <div class="sidebar">
-      <h3>Khách sạn A</h3>
+      <h3>SmartCity HomeTel</h3>
       <hr style="border-color: #495057;">
-      <a href="{% url 'dashboard' %}" style="background-color: #495057;">Dashboard</a> 
-      <a href="{% url 'manage-rooms' %}">Sơ đồ/Quản lý Phòng</a> 
+      <a href="{% url 'dashboard' %}" style="background-color: #495057;">Sơ Đồ Phòng</a> 
+      <a href="{% url 'manage-rooms' %}">Quản lý Phòng</a> 
       <a href="{% url 'reservation-calendar' %}">Lịch Đặt phòng</a> 
       <a href="{% url 'manage-guests' %}">Quản lý Khách hàng</a> <a href="{% url 'manage-service-inventory' %}">Quản lý Dịch vụ</a> 
       <a href="{% url 'manage-requests' %}">Quản lý Yêu cầu (QR)</a>
+      <a href="{% url 'management-dashboard' %}">Báo cáo Quản trị</a>
       <a href="{% url 'export-registry' %}">Xuất File Tạm Trú</a>
       <hr style="border-color: #495057;">
       <a href="{% url 'logout' %}" class="logout-link">Đăng xuất ({{ user.username }})</a>

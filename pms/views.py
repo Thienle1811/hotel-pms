@@ -9,6 +9,8 @@ from django.forms import modelform_factory
 from django.urls import reverse # Cần cho QR Code
 from urllib.parse import quote # Cần cho mã hóa URL QR Code (FIX)
 from django.contrib.auth import logout
+from django.db.models import Sum, Count
+from .models import StaffSchedule
 
 import pandas as pd
 from io import BytesIO
@@ -306,6 +308,7 @@ def export_temporary_registry(request):
             'Ngày sinh': guest.dob.strftime('%d/%m/%Y') if guest.dob else '',
             'Loại giấy tờ': guest.get_id_type_display(),
             'Mã số giấy tờ': guest.id_number,
+            'Biển số xe': guest.license_plate if guest.license_plate else '',
             'Địa chỉ thường trú': guest.address,
             'Số điện thoại': guest.phone,
             'Thời gian cư trú': f"Từ {res.check_in_date.strftime('%d/%m/%Y')} đến {check_out}",
@@ -694,3 +697,112 @@ def custom_logout(request):
     """
     logout(request)
     return redirect('login')
+
+@login_required
+@transaction.atomic
+def delete_room(request, room_id):
+    """
+    Chức năng xóa phòng (Chỉ xóa khi phòng Trống hoặc Dơ)
+    """
+    room = get_object_or_404(Room, id=room_id)
+    
+    if request.method == 'POST':
+        # 1. Kiểm tra an toàn
+        if room.status in ['Occupied', 'Booked']:
+            messages.error(request, f"Không thể xóa Phòng {room.room_number} vì đang có khách hoặc đã được đặt trước.")
+            return redirect('room-edit', room_id=room.id)
+            
+        # 2. Thực hiện xóa
+        room_number = room.room_number
+        room.delete()
+        messages.success(request, f"Đã xóa Phòng {room_number} thành công.")
+        return redirect('manage-rooms')
+        
+    return redirect('manage-rooms')
+@login_required
+def room_create(request):
+    """
+    Chức năng thêm phòng mới
+    """
+    # Tạo Form riêng cho việc thêm mới (Bao gồm cả trường Hotel)
+    RoomCreateForm = modelform_factory(
+        Room, 
+        fields=('hotel', 'room_number', 'room_type', 'price_per_night', 'status'),
+        labels={
+            'hotel': 'Thuộc Khách sạn',
+            'room_number': 'Số Phòng', 
+            'room_type': 'Loại Phòng', 
+            'price_per_night': 'Giá/Đêm (VND)',
+            'status': 'Trạng thái ban đầu'
+        }
+    )
+
+    if request.method == 'POST':
+        form = RoomCreateForm(request.POST)
+        if form.is_valid():
+            room = form.save()
+            messages.success(request, f"Đã thêm Phòng {room.room_number} thành công.")
+            return redirect('manage-rooms')
+        else:
+            messages.error(request, "Lỗi khi thêm phòng. Vui lòng kiểm tra lại (Số phòng không được trùng).")
+    else:
+        form = RoomCreateForm()
+        
+    context = {
+        'page_title': 'Thêm Phòng Mới',
+        'form': form
+    }
+    return render(request, 'pms/room_add_form.html', context)
+
+@login_required
+def management_dashboard(request):
+    today = timezone.now()
+    current_month = today.month
+    current_year = today.year
+
+    # 1. Tính SỐ PHÒNG ĐANG SỬ DỤNG HIỆN TẠI
+    # Đếm các phòng có trạng thái là 'Occupied'
+    occupied_rooms_count = Room.objects.filter(status='Occupied').count()
+
+    # 2. Tính SỐ KHÁCH TRONG THÁNG
+    # Đếm số Booking đã check-in trong tháng này
+    guest_count_month = Reservation.objects.filter(
+        check_in_date__month=current_month,
+        check_in_date__year=current_year
+    ).count()
+
+    # 3. Tính TỔNG DOANH THU THÁNG (Ước tính)
+    # Lấy các booking đã HOÀN THÀNH trong tháng
+    completed_reservations = Reservation.objects.filter(
+        status='Completed',
+        check_out_date__month=current_month,
+        check_out_date__year=current_year
+    )
+    
+    total_revenue = 0
+    for res in completed_reservations:
+        # Tính tiền phòng
+        duration = res.check_out_date - res.check_in_date
+        nights = duration.days if duration.days > 0 else 1
+        room_revenue = nights * res.room.price_per_night
+        
+        # Tính tiền dịch vụ
+        service_revenue = ServiceCharge.objects.filter(reservation=res).aggregate(Sum('price'))['price__sum'] or 0
+        
+        total_revenue += (room_revenue + service_revenue)
+
+    # 4. Lấy LỊCH LÀM VIỆC (7 ngày tới)
+    next_week = today + timezone.timedelta(days=7)
+    schedules = StaffSchedule.objects.filter(
+        date__range=[today.date(), next_week.date()]
+    ).order_by('date', 'shift')
+
+    context = {
+        'page_title': f'Báo cáo Quản trị - Tháng {current_month}',
+        'occupied_count': occupied_rooms_count,
+        'guest_month_count': guest_count_month,
+        'revenue_month': total_revenue,
+        'schedules': schedules,
+        'today': today.date(),
+    }
+    return render(request, 'pms/management_dashboard.html', context)

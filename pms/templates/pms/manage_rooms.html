@@ -42,6 +42,12 @@
     <div class="content">
       <h2>{{ page_title }}</h2>
       
+      <div style="text-align: right; margin-bottom: 15px;">
+          <a href="{% url 'room-create' %}" style="background-color: #28a745; color: white; padding: 10px 15px; border-radius: 5px; text-decoration: none; font-weight: bold;">
+              + Thêm Phòng Mới
+          </a>
+      </div>
+
       {% if messages %}
           {% for message in messages %}
               <div style="padding: 10px; background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; margin-bottom: 15px;">

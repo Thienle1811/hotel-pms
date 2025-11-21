@@ -10,7 +10,7 @@ class GuestForm(forms.ModelForm):
         model = Guest
         fields = [
             'full_name', 'dob', 'id_type', 
-            'id_number', 'address', 'phone'
+            'id_number', 'license_plate','address', 'phone'
         ]
         widgets = {
             'dob': forms.DateInput(attrs={'type': 'date'}),
@@ -22,6 +22,7 @@ class GuestForm(forms.ModelForm):
             'id_number': 'Mã số giấy tờ',
             'address': 'Địa chỉ thường trú',
             'phone': 'Số điện thoại',
+            'license_plate': 'Biển số xe',
         }
 
 class ReservationForm(forms.ModelForm):

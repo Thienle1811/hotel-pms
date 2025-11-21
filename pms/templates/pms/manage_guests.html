@@ -62,7 +62,7 @@
           <tr>
             <th>Họ và Tên</th>
             <th>Mã số giấy tờ</th>
-            <th>Loại giấy tờ</th>
+            <th>Biển số xe</th> <th>Loại giấy tờ</th>
             <th>Ngày sinh</th>
             <th>Địa chỉ thường trú</th>
             <th>Số điện thoại</th>
@@ -73,6 +73,7 @@
           <tr>
             <td><strong>{{ guest.full_name }}</strong></td>
             <td>{{ guest.id_number }}</td>
+            <td>{{ guest.license_plate|default:"---" }}</td> <td>{{ guest.get_id_type_display }}</td>
             <td>{{ guest.get_id_type_display }}</td>
             <td>{{ guest.dob|date:"d/m/Y"|default:"---" }}</td>
             <td>{{ guest.address }}</td>

@@ -235,7 +235,8 @@ class WalkInCheckinAPIView(APIView):
         id_number = request.data.get('id_number')
         phone = request.data.get('phone', '')
         dob = request.data.get('dob')
-        address = request.data.get('address', '') # <--- THÊM DÒNG NÀY
+        address = request.data.get('address', '')
+        license_plate = request.data.get('license_plate', '')
 
         if not full_name or not id_number:
             return Response({"error": "Thiếu tên hoặc số giấy tờ."}, status=400)
@@ -249,6 +250,7 @@ class WalkInCheckinAPIView(APIView):
                         'phone': phone,
                         'dob': dob if dob else None,
                         'address': address if address else 'Khách vãng lai', # <--- LƯU ĐỊA CHỈ
+                        'license_plate': license_plate,
                         'id_type': 'CCCD'
                     }
                 )
