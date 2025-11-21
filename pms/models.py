@@ -2,6 +2,10 @@ from django.db import models
 from django.utils import timezone
 from django.core.exceptions import ValidationError
 from django.db.models import Q 
+from PIL import Image
+from io import BytesIO
+from django.core.files.base import ContentFile
+import os
 
 # Model cho chuỗi khách sạn (Hotel) - Chuẩn bị cho việc mở rộng 7 cơ sở
 class Hotel(models.Model):
@@ -42,7 +46,7 @@ class Room(models.Model):
 # Model cho Khách hàng (Guest) - Chứa thông tin đăng ký tạm trú
 class Guest(models.Model):
     full_name = models.CharField(max_length=255, verbose_name="Họ và Tên")
-    dob = models.DateField(null=True, blank=True, verbose_name="Ngày sinh") # Bắt buộc cho Đăng ký tạm trú
+    dob = models.DateField(null=True, blank=True, verbose_name="Ngày sinh") 
     
     ID_TYPE_CHOICES = [
         ('CCCD', 'Căn cước Công dân'),
@@ -51,10 +55,12 @@ class Guest(models.Model):
         ('OTHER', 'Khác')
     ]
     id_type = models.CharField(max_length=10, choices=ID_TYPE_CHOICES, default='CCCD', verbose_name="Loại giấy tờ")
-    id_number = models.CharField(max_length=50, unique=True, verbose_name="Mã số giấy tờ") # Mã số giấy tờ (Key cho OCR)
+    id_number = models.CharField(max_length=50, unique=True, verbose_name="Mã số giấy tờ")
+    
     license_plate = models.CharField(max_length=20, null=True, blank=True, verbose_name="Biển số xe")
     address = models.CharField(max_length=500, verbose_name="Địa chỉ thường trú")
     phone = models.CharField(max_length=20, null=True, blank=True, verbose_name="Số điện thoại")
+    photo = models.ImageField(upload_to='guest_ids/', null=True, blank=True, verbose_name="Ảnh giấy tờ")
     
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -64,6 +70,36 @@ class Guest(models.Model):
     class Meta:
         verbose_name = "3. Khách hàng"
         verbose_name_plural = "3. Quản lý Khách hàng"
+
+    # 👇 2. THÊM HÀM SAVE() NÀY ĐỂ TỰ ĐỘNG NÉN ẢNH
+    def save(self, *args, **kwargs):
+        # Nếu có ảnh được tải lên
+        if self.photo:
+            # Mở ảnh bằng Pillow
+            img = Image.open(self.photo)
+            
+            # Kiểm tra: Nếu ảnh lớn hơn 300KB hoặc kích thước quá to thì mới nén
+            # (Tránh nén đi nén lại làm hỏng ảnh cũ)
+            if self.photo.size > 300 * 1024:  # 300KB
+                # Chuyển sang chế độ màu RGB (để tránh lỗi nếu ảnh là PNG trong suốt)
+                if img.mode != 'RGB':
+                    img = img.convert('RGB')
+                
+                # Resize ảnh nếu chiều ngang quá lớn (ví dụ > 1000px)
+                if img.width > 1000:
+                    output_size = (1000, int((1000 / img.width) * img.height))
+                    img.thumbnail(output_size)
+                
+                # Nén ảnh
+                im_io = BytesIO()
+                # quality=30 tương đương mức nén 0.3 trên Mobile
+                img.save(im_io, format='JPEG', quality=30) 
+                
+                # Lưu lại file mới đè lên file cũ
+                new_image = ContentFile(im_io.getvalue())
+                self.photo.save(self.photo.name, new_image, save=False)
+
+        super().save(*args, **kwargs)
 
 # Model cho Đặt phòng (Reservation)
 class Reservation(models.Model):
@@ -159,9 +195,9 @@ class StaffSchedule(models.Model):
     ]
     
     SHIFT_CHOICES = [
-        ('Morning', 'Ca Sáng (6h-14h)'),
-        ('Afternoon', 'Ca Chiều (14h-22h)'),
-        ('Night', 'Ca Đêm (22h-6h)'),
+        ('Morning', 'Ca Sáng'),
+        ('Afternoon', 'Ca Chiều'),
+        ('Night', 'Ca Đêm'),
     ]
 
     staff_name = models.CharField(max_length=100, verbose_name="Tên Nhân viên")

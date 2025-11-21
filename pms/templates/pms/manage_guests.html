@@ -1,100 +1,61 @@
-<!DOCTYPE html>
-<html lang="vi">
-  <head>
-    <meta charset="UTF-8" />
-    <title>{{ page_title }}</title>
-    <style>
-      body { font-family: sans-serif; margin: 0; display: flex; }
-      .sidebar { width: 250px; background-color: #343a40; color: white; padding: 20px; min-height: 100vh; }
-      .sidebar h3 { margin-top: 0; border-bottom: 1px solid #495057; padding-bottom: 10px; }
-      .sidebar a { color: white; text-decoration: none; display: block; padding: 10px 0; margin-bottom: 5px; }
-      .content { flex-grow: 1; padding: 30px; background-color: #f8f9fa; }
-      h2 { color: #333; margin-bottom: 20px; }
-      table { width: 100%; border-collapse: collapse; margin-top: 20px; background-color: white; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); }
-      th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
-      th { background-color: #e9ecef; }
-      .search-bar { margin-bottom: 20px; }
-      .search-bar input { padding: 8px; border: 1px solid #ccc; border-radius: 4px; width: 300px; }
-      .search-bar button { padding: 8px 15px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
-      .logout-link { background-color: #dc3545; text-align: center; border-radius: 5px; margin-top: 20px; }
-      
-      /* Style cho thông báo messages */
-      .alert { padding: 10px; margin-bottom: 15px; border: 1px solid transparent; border-radius: 4px; }
-      .alert-success { color: #155724; background-color: #d4edda; border-color: #c3e6cb; }
-      .alert-error { color: #721c24; background-color: #f8d7da; border-color: #f5c6cb; }
-    </style>
-  </head>
-  <body>
-    <div class="sidebar">
-        <h3>Khách sạn A</h3>
-        <hr style="border-color: #495057;">
-        <a href="{% url 'dashboard' %}">Dashboard</a>
-        <a href="{% url 'manage-rooms' %}">Sơ đồ/Quản lý Phòng</a>
-        <a href="{% url 'reservation-calendar' %}">Lịch Đặt phòng</a>
-        <a href="{% url 'manage-guests' %}" style="background-color: #495057;">Quản lý Khách hàng</a>
-        <a href="{% url 'manage-service-inventory' %}">Quản lý Dịch vụ</a>
-        <a href="{% url 'manage-requests' %}">Quản lý Yêu cầu (QR)</a>
-        <a href="{% url 'export-registry' %}">Xuất File Tạm Trú</a>
-        <hr style="border-color: #495057;">
-        <a href="{% url 'logout' %}" class="logout-link">Đăng xuất ({{ user.username }})</a>
-    </div>
+{% extends 'pms/base.html' %}
 
-    <div class="content">
-      <h2>{{ page_title }}</h2>
-      
-      {% if messages %}
-        {% for message in messages %}
-          <div class="alert {% if message.tags == 'error' %}alert-error{% else %}alert-success{% endif %}">
-            {{ message }}
-          </div>
-        {% endfor %}
-      {% endif %}
-      
-      <div class="search-bar">
-        <form method="GET">
-          <input type="text" name="q" placeholder="Tìm kiếm theo Tên, CCCD hoặc SĐT..." value="{{ search_query|default:'' }}">
-          <button type="submit">Tìm kiếm</button>
-        </form>
-      </div>
+{% block title %}{{ page_title }}{% endblock %}
 
-      <table>
-        <thead>
-          <tr>
-            <th>Họ và Tên</th>
-            <th>Mã số giấy tờ</th>
-            <th>Biển số xe</th> <th>Loại giấy tờ</th>
-            <th>Ngày sinh</th>
-            <th>Địa chỉ thường trú</th>
-            <th>Số điện thoại</th>
-            <th style="text-align: center;">Hành động</th> </tr>
-        </thead>
-        <tbody>
-          {% for guest in guests %}
-          <tr>
-            <td><strong>{{ guest.full_name }}</strong></td>
-            <td>{{ guest.id_number }}</td>
-            <td>{{ guest.license_plate|default:"---" }}</td> <td>{{ guest.get_id_type_display }}</td>
-            <td>{{ guest.get_id_type_display }}</td>
-            <td>{{ guest.dob|date:"d/m/Y"|default:"---" }}</td>
-            <td>{{ guest.address }}</td>
-            <td>{{ guest.phone|default:"---" }}</td>
-            
-            <td style="text-align: center; white-space: nowrap;">
-                <a href="{% url 'edit-guest' guest.id %}" style="color: #007bff; text-decoration: none; font-weight: bold; margin-right: 15px;">Sửa</a>
+{% block extra_css %}
+  .search-bar { margin-bottom: 20px; }
+  .search-bar input { padding: 8px; border: 1px solid #ccc; border-radius: 4px; width: 300px; }
+  .search-bar button { padding: 8px 15px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+  .search-bar button:hover { background-color: #0056b3; }
+{% endblock %}
 
-                <form action="{% url 'delete-guest' guest.id %}" method="POST" style="display: inline;" onsubmit="return confirm('CẢNH BÁO: Xóa khách hàng sẽ xóa luôn toàn bộ lịch sử đặt phòng của họ.\n\nBạn có chắc chắn muốn xóa {{ guest.full_name }} không?');">
-                    {% csrf_token %}
-                    <button type="submit" style="background: none; border: none; color: #dc3545; font-weight: bold; cursor: pointer; padding: 0; font-family: inherit; font-size: inherit;">Xóa</button>
-                </form>
-            </td>
-          </tr>
-          {% empty %}
-          <tr>
-            <td colspan="7">Không tìm thấy khách hàng nào.</td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  </body>
-</html>
+{% block content %}
+  <h2>{{ page_title }}</h2>
+  
+  <div class="search-bar">
+    <form method="GET">
+      <input type="text" name="q" placeholder="Tìm kiếm theo Tên, CCCD hoặc SĐT..." value="{{ search_query|default:'' }}">
+      <button type="submit">Tìm kiếm</button>
+    </form>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Họ và Tên</th>
+        <th>Mã số giấy tờ</th>
+        <th>Biển số xe</th>
+        <th>Loại giấy tờ</th>
+        <th>Ngày sinh</th>
+        <th>Địa chỉ thường trú</th>
+        <th>Số điện thoại</th>
+        <th style="text-align: center;">Hành động</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for guest in guests %}
+      <tr>
+        <td><strong>{{ guest.full_name }}</strong></td>
+        <td>{{ guest.id_number }}</td>
+        <td>{{ guest.license_plate|default:"---" }}</td>
+        <td>{{ guest.get_id_type_display }}</td>
+        <td>{{ guest.dob|date:"d/m/Y"|default:"---" }}</td>
+        <td>{{ guest.address }}</td>
+        <td>{{ guest.phone|default:"---" }}</td>
+        
+        <td style="text-align: center; white-space: nowrap;">
+            <a href="{% url 'edit-guest' guest.id %}" style="color: #007bff; text-decoration: none; font-weight: bold; margin-right: 15px;">Sửa</a>
+            <form action="{% url 'delete-guest' guest.id %}" method="POST" style="display: inline;" onsubmit="return confirm('CẢNH BÁO: Xóa khách hàng sẽ xóa luôn toàn bộ lịch sử đặt phòng của họ.\n\nBạn có chắc chắn muốn xóa {{ guest.full_name }} không?');">
+                {% csrf_token %}
+                <button type="submit" style="background: none; border: none; color: #dc3545; font-weight: bold; cursor: pointer; padding: 0; font-family: inherit; font-size: inherit;">Xóa</button>
+            </form>
+        </td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="8">Không tìm thấy khách hàng nào.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}

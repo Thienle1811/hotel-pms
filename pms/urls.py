@@ -83,4 +83,8 @@ urlpatterns = [
     path('guests/delete/<int:guest_id>/', views.delete_guest, name='delete-guest'),
     path('rooms/delete/<int:room_id>/', views.delete_room, name='delete-room'),
     path('management/', views.management_dashboard, name='management-dashboard'),
+    path('ajax/new-requests-count/', views.check_new_requests_count, name='ajax-new-requests-count'),
+    path('management/schedule/add/', views.add_staff_schedule, name='add-staff-schedule'),
+    path('management/staff/', views.manage_staff, name='manage-staff'),
+    path('management/staff/delete/<int:user_id>/', views.delete_staff, name='delete-staff'),
 ]

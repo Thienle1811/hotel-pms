@@ -1,85 +1,48 @@
-<!DOCTYPE html>
-<html lang="vi">
-  <head>
-    <meta charset="UTF-8" />
-    <title>{{ page_title }}</title>
-    <style>
-      body { font-family: sans-serif; margin: 0; display: flex; }
-      .sidebar { width: 250px; background-color: #343a40; color: white; padding: 20px; min-height: 100vh; }
-      .sidebar h3 { margin-top: 0; border-bottom: 1px solid #495057; padding-bottom: 10px; }
-      .sidebar a { color: white; text-decoration: none; display: block; padding: 10px 0; margin-bottom: 5px; }
-      .sidebar a:hover { background-color: #495057; padding-left: 5px; }
-      .content { flex-grow: 1; padding: 30px; background-color: #f8f9fa; }
-      h2 { color: #333; margin-bottom: 20px; }
-      table { width: 100%; border-collapse: collapse; margin-top: 20px; background-color: white; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); }
-      th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
-      th { background-color: #e9ecef; }
-      .actions a, .actions button { color: #007bff; text-decoration: none; margin-right: 10px; border: none; background: none; cursor: pointer; }
-      .actions button.delete { color: #dc3545; }
-      .header-actions { margin-bottom: 20px; text-align: right; }
-      .header-actions a { background-color: #28a745; color: white; padding: 10px 15px; border-radius: 5px; text-decoration: none; font-weight: bold; }
-      .logout-link { background-color: #dc3545; text-align: center; border-radius: 5px; margin-top: 20px; }
-    </style>
-  </head>
-  <body>
-    <div class="sidebar">
-        <h3>Khách sạn A</h3>
-        <hr style="border-color: #495057;">
-        <a href="{% url 'dashboard' %}">Dashboard</a>
-        <a href="{% url 'manage-rooms' %}">Sơ đồ/Quản lý Phòng</a>
-        <a href="{% url 'reservation-calendar' %}">Lịch Đặt phòng</a>
-        <a href="{% url 'manage-guests' %}">Quản lý Khách hàng</a> <a href="{% url 'manage-service-inventory' %}" style="background-color: #495057;">Quản lý Dịch vụ</a>
-        <a href="{% url 'manage-requests' %}">Quản lý Yêu cầu (QR)</a>
-        <a href="{% url 'export-registry' %}">Xuất File Tạm Trú</a>
-        <hr style="border-color: #495057;">
-        <a href="{% url 'logout' %}" class="logout-link">Đăng xuất ({{ user.username }})</a>
-    </div>
+{% extends 'pms/base.html' %}
 
-    <div class="content">
-      <h2>{{ page_title }}</h2>
-      
-      {% if messages %}
-          {% for message in messages %}
-              <div style="padding: 10px; background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; margin-bottom: 15px;">
-                  {{ message }}
-              </div>
-          {% endfor %}
-      {% endif %}
+{% block title %}{{ page_title }}{% endblock %}
 
-      <div class="header-actions">
-        <a href="{% url 'service-item-create' %}">+ Thêm Dịch vụ mới</a>
-      </div>
+{% block extra_css %}
+  .header-actions { margin-bottom: 20px; text-align: right; }
+  .actions a, .actions button { color: #007bff; text-decoration: none; margin-right: 10px; border: none; background: none; cursor: pointer; }
+  .actions button.delete { color: #dc3545; }
+{% endblock %}
 
-      <table>
-        <thead>
-          <tr>
-            <th>STT</th>
-            <th>Tên Dịch vụ/Sản phẩm</th>
-            <th>Đơn giá (VND)</th>
-            <th>Hành động</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for item in service_items %}
-          <tr>
-            <td>{{ forloop.counter }}</td>
-            <td><strong>{{ item.item_name }}</strong></td>
-            <td>{{ item.price|floatformat:0 }}</td>
-            <td class="actions">
-              <a href="{% url 'service-item-edit' item.id %}">Sửa</a>
-              <form action="{% url 'service-item-delete' item.id %}" method="POST" style="display: inline;" onsubmit="return confirm('Bạn có chắc muốn xóa dịch vụ này?');">
-                {% csrf_token %}
-                <button type="submit" class="delete">Xóa</button>
-              </form>
-            </td>
-          </tr>
-          {% empty %}
-          <tr>
-            <td colspan="4">Chưa có danh mục dịch vụ nào được tạo.</td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  </body>
-</html>
+{% block content %}
+  <h2>{{ page_title }}</h2>
+
+  <div class="header-actions">
+    <a href="{% url 'service-item-create' %}" class="btn-action btn-green" style="padding: 10px 15px;">+ Thêm Dịch vụ mới</a>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>STT</th>
+        <th>Tên Dịch vụ/Sản phẩm</th>
+        <th>Đơn giá (VND)</th>
+        <th>Hành động</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in service_items %}
+      <tr>
+        <td>{{ forloop.counter }}</td>
+        <td><strong>{{ item.item_name }}</strong></td>
+        <td>{{ item.price|floatformat:0 }}</td>
+        <td class="actions">
+          <a href="{% url 'service-item-edit' item.id %}">Sửa</a>
+          <form action="{% url 'service-item-delete' item.id %}" method="POST" style="display: inline;" onsubmit="return confirm('Bạn có chắc muốn xóa dịch vụ này?');">
+            {% csrf_token %}
+            <button type="submit" class="delete">Xóa</button>
+          </form>
+        </td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="4">Chưa có danh mục dịch vụ nào được tạo.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}

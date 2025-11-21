@@ -1,173 +1,70 @@
-<!DOCTYPE html>
-<html lang="vi">
-  <head>
-    <meta charset="UTF-8" />
-    <title>{{ page_title }}</title>
-    <style>
-      body { font-family: sans-serif; margin: 0; display: flex; }
-      /* Style cho cột menu bên trái */
-      .sidebar {
-        width: 250px;
-        background-color: #343a40;
-        color: white;
-        padding: 20px;
-        min-height: 100vh;
-        box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
-      }
-      .sidebar h3 { margin-top: 0; border-bottom: 1px solid #495057; padding-bottom: 10px; }
-      .sidebar a {
-        color: white;
-        text-decoration: none;
-        display: block;
-        padding: 10px 0;
-        margin-bottom: 5px;
-        border-radius: 4px;
-        transition: background-color 0.2s;
-      }
-      .sidebar a:hover {
-        background-color: #495057;
-      }
-      /* Màu đỏ cho nút đăng xuất */
-      .sidebar .logout-link {
-        background-color: #dc3545;
-        font-weight: bold;
-        text-align: center;
-      }
-      .sidebar .logout-link:hover {
-        background-color: #c82333;
-      }
+{% extends 'pms/base.html' %}
 
-      .content {
-        flex-grow: 1;
-        padding: 30px;
-        background-color: #f8f9fa;
-      }
-      .room-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 20px;
-        margin-top: 20px;
-      }
-      .room-card {
-        padding: 20px;
-        border-radius: 8px;
-        text-align: center;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        transition: transform 0.2s;
-      }
-      .room-card:hover {
-        transform: translateY(-3px);
-      }
-      /* Mã màu theo yêu cầu */
-      .status-Vacant { background-color: #28a17a; color: white; } /* Xanh lá */
-      .status-Booked { background-color: #ffc107; color: #343a40; } /* Vàng */
-      .status-Occupied { background-color: #dc3545; color: white; } /* Đỏ */
-      .status-Dirty { background-color: #6c757d; color: white; } /* Xám */
-      /* Hiệu ứng nhấp nháy cho alert: Vàng -> Đỏ */
-      @keyframes blink {
-        0%, 100% { background-color: #ffc107; } /* Vàng */
-        50% { background-color: #dc3545; color: white;} /* Đỏ */
-      }
-      .alerting {
-        animation: blink 1s step-end infinite;
-      }
-      
-      .card-actions { margin-top: 15px; }
-      .card-actions a, .card-actions button {
-        display: block;
-        padding: 8px;
-        margin-top: 8px;
-        background-color: rgba(255, 255, 255, 0.2);
-        color: inherit;
-        text-decoration: none;
-        border: none;
-        width: 100%;
-        cursor: pointer;
-        border-radius: 4px;
-        font-weight: bold;
-        transition: background-color 0.2s;
-      }
-      .card-actions a:hover, .card-actions button:hover {
-          background-color: rgba(255, 255, 255, 0.4);
-      }
-      .quick-action-button {
-          background-color: #007bff !important;
-          color: white !important;
-      }
-      .quick-action-button:hover {
-          background-color: #0056b3 !important;
-      }
-    </style>
-  </head>
-  <body>
-    <div class="sidebar">
-      <h3>SmartCity HomeTel</h3>
-      <hr style="border-color: #495057;">
-      <a href="{% url 'dashboard' %}" style="background-color: #495057;">Sơ Đồ Phòng</a> 
-      <a href="{% url 'manage-rooms' %}">Quản lý Phòng</a> 
-      <a href="{% url 'reservation-calendar' %}">Lịch Đặt phòng</a> 
-      <a href="{% url 'manage-guests' %}">Quản lý Khách hàng</a> <a href="{% url 'manage-service-inventory' %}">Quản lý Dịch vụ</a> 
-      <a href="{% url 'manage-requests' %}">Quản lý Yêu cầu (QR)</a>
-      <a href="{% url 'management-dashboard' %}">Báo cáo Quản trị</a>
-      <a href="{% url 'export-registry' %}">Xuất File Tạm Trú</a>
-      <hr style="border-color: #495057;">
-      <a href="{% url 'logout' %}" class="logout-link">Đăng xuất ({{ user.username }})</a>
-    </div>
+{% block title %}{{ page_title }}{% endblock %}
 
-    <div class="content">
-      <h2>{{ page_title }}</h2>
-      
-      {% if messages %}
-        {% for message in messages %}
-          <div style="padding: 10px; background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; margin-bottom: 15px;">
-            {{ message }}
-          </div>
-        {% endfor %}
-      {% endif %}
-      
-      {% if not room_data %}
-      <div style="padding: 20px; background-color: #fff3cd; border: 1px solid #ffeeba; color: #856404; border-radius: 5px;">
-          <h3>⚠️ Chưa có dữ liệu phòng</h3>
-          <p>Vui lòng tạo Khách sạn và 7 Phòng trong trang Admin, sau đó Refresh trang này.</p>
-          <a href="{% url 'manage-rooms' %}" style="color: #007bff; font-weight: bold;">Tạo phòng ngay</a>
-      </div>
-      {% endif %}
+{% block extra_css %}
+  .room-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-top: 20px; }
+  .room-card { padding: 20px; border-radius: 8px; text-align: center; color: white; position: relative; box-shadow: 0 4px 8px rgba(0,0,0,0.1); transition: transform 0.2s; }
+  .room-card:hover { transform: translateY(-3px); }
+  .status-Vacant { background-color: #28a17a; }
+  .status-Booked { background-color: #ffc107; color: #343a40; }
+  .status-Occupied { background-color: #dc3545; }
+  .status-Dirty { background-color: #6c757d; }
+  .alerting { animation: blink 1s step-end infinite; }
+  @keyframes blink { 0%, 100% { background-color: #ffc107; } 50% { background-color: #dc3545; color: white;} }
+  .card-actions { margin-top: 15px; }
+  .card-actions a { display: block; padding: 8px; margin-top: 8px; background-color: rgba(255, 255, 255, 0.2); color: inherit; text-decoration: none; border-radius: 4px; font-weight: bold; }
+  .card-actions a:hover { background-color: rgba(255, 255, 255, 0.4); }
+  .quick-action-button { background-color: #007bff !important; color: white !important; }
+{% endblock %}
 
-      <div class="room-grid">
-        {% for data in room_data %}
-        <div class="room-card status-{{ data.room.status }} {% if data.is_alerting %}alerting{% endif %}">
-            <h3>Phòng {{ data.room.room_number }}</h3>
-            <p style="font-weight: bold;">{{ data.room.get_status_display }}</p>
+{% block content %}
+  <h2>{{ page_title }}</h2>
+  
+  {% if not room_data %}
+  <div style="padding: 20px; background-color: #fff3cd; border: 1px solid #ffeeba; color: #856404; border-radius: 5px;">
+      <h3>⚠️ Chưa có dữ liệu phòng</h3>
+      <p>Vui lòng tạo Khách sạn và 7 Phòng trong trang Admin, sau đó Refresh trang này.</p>
+      <a href="{% url 'manage-rooms' %}" style="color: #007bff; font-weight: bold;">Tạo phòng ngay</a>
+  </div>
+  {% endif %}
 
-            {% if data.reservation %}
-                <p>Khách: {{ data.guest_name }}</p>
-                {% if data.room.status == 'Booked' %}
-                    <p>Check-in: {{ data.reservation.check_in_date|date:"H:i d/m" }}</p>
-                    {% if data.is_alerting %}
-                        <p style="font-weight: bold;">(SẮP CHECK-IN)</p>
+  <div class="room-grid">
+    {% for data in room_data %}
+    <div class="room-card status-{{ data.room.status }} {% if data.is_alerting %}alerting{% endif %}">
+        <h3>Phòng {{ data.room.room_number }}</h3>
+        <p style="font-weight: bold;">{{ data.room.get_status_display }}</p>
+
+        {% if data.reservation %}
+            <p>Khách: {{ data.guest_name }}</p>
+            {% if data.room.status == 'Booked' %}
+                <p>Check-in: {{ data.reservation.check_in_date|date:"H:i d/m" }}</p>
+                {% if data.is_alerting %}
+                    <p style="font-weight: bold;">(SẮP CHECK-IN)</p>
+                {% endif %}
+            {% elif data.room.status == 'Occupied' %}
+                <p>Check-out D.kiến: 
+                    {% if data.reservation.check_out_date %}
+                        {{ data.reservation.check_out_date|date:"H:i d/m" }}
+                    {% else %}
+                        (Chưa xác định)
                     {% endif %}
-                {% elif data.room.status == 'Occupied' %}
-                    <p>Check-out D.kiến: 
-                        {% if data.reservation.check_out_date %}
-                            {{ data.reservation.check_out_date|date:"H:i d/m" }}
-                        {% else %}
-                            (Chưa xác định)
-                        {% endif %}
-                    </p>
-                {% endif %}
+                </p>
             {% endif %}
+        {% endif %}
 
-            <div class="card-actions">
-                {% if data.room.status == 'Vacant' or data.room.status == 'Dirty' %}
-                    <a href="{% url 'create-booking' data.room.id %}" class="quick-action-button">Tạo Booking/Check-in</a>
-                {% elif data.room.status == 'Booked' %}
-                    <a href="{% url 'perform-check-in' data.reservation.id %}" class="quick-action-button">Check-in</a>
-                    <a href="#">Hủy Booking</a>
-                {% elif data.room.status == 'Occupied' %}
-                    <a href="{% url 'manage-room-services' data.reservation.id %}">Thêm Dịch vụ</a> 
-                    <a href="{% url 'billing-details' data.reservation.id %}" class="quick-action-button">Check-out (Hóa đơn)</a>
-                {% endif %}
-            </div>
+        <div class="card-actions">
+            {% if data.room.status == 'Vacant' or data.room.status == 'Dirty' %}
+                <a href="{% url 'create-booking' data.room.id %}" class="quick-action-button">Tạo Booking/Check-in</a>
+            {% elif data.room.status == 'Booked' %}
+                <a href="{% url 'perform-check-in' data.reservation.id %}" class="quick-action-button">Check-in</a>
+                <a href="#">Hủy Booking</a>
+            {% elif data.room.status == 'Occupied' %}
+                <a href="{% url 'manage-room-services' data.reservation.id %}">Thêm Dịch vụ</a> 
+                <a href="{% url 'billing-details' data.reservation.id %}" class="quick-action-button">Check-out (Hóa đơn)</a>
+            {% endif %}
         </div>
-        {% endfor %}
-      </div>
+    </div>
+    {% endfor %}
+  </div>
+{% endblock %}

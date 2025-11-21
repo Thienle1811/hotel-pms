@@ -11,6 +11,11 @@ from urllib.parse import quote # Cần cho mã hóa URL QR Code (FIX)
 from django.contrib.auth import logout
 from django.db.models import Sum, Count
 from .models import StaffSchedule
+from django.http import JsonResponse
+from datetime import timedelta, date # Thêm date vào import
+from .forms import StaffScheduleForm # Import Form mới
+from django.contrib.auth.models import User, Group
+from .forms import StaffUserForm
 
 import pandas as pd
 from io import BytesIO
@@ -760,19 +765,14 @@ def management_dashboard(request):
     current_month = today.month
     current_year = today.year
 
-    # 1. Tính SỐ PHÒNG ĐANG SỬ DỤNG HIỆN TẠI
-    # Đếm các phòng có trạng thái là 'Occupied'
+    # --- Phần thống kê (Giữ nguyên) ---
     occupied_rooms_count = Room.objects.filter(status='Occupied').count()
-
-    # 2. Tính SỐ KHÁCH TRONG THÁNG
-    # Đếm số Booking đã check-in trong tháng này
+    
     guest_count_month = Reservation.objects.filter(
         check_in_date__month=current_month,
         check_in_date__year=current_year
     ).count()
 
-    # 3. Tính TỔNG DOANH THU THÁNG (Ước tính)
-    # Lấy các booking đã HOÀN THÀNH trong tháng
     completed_reservations = Reservation.objects.filter(
         status='Completed',
         check_out_date__month=current_month,
@@ -781,28 +781,145 @@ def management_dashboard(request):
     
     total_revenue = 0
     for res in completed_reservations:
-        # Tính tiền phòng
         duration = res.check_out_date - res.check_in_date
         nights = duration.days if duration.days > 0 else 1
         room_revenue = nights * res.room.price_per_night
-        
-        # Tính tiền dịch vụ
         service_revenue = ServiceCharge.objects.filter(reservation=res).aggregate(Sum('price'))['price__sum'] or 0
-        
         total_revenue += (room_revenue + service_revenue)
 
-    # 4. Lấy LỊCH LÀM VIỆC (7 ngày tới)
-    next_week = today + timezone.timedelta(days=7)
-    schedules = StaffSchedule.objects.filter(
-        date__range=[today.date(), next_week.date()]
-    ).order_by('date', 'shift')
+    # --- PHẦN LỊCH LÀM VIỆC (LOGIC MỚI) ---
+    # Tìm ngày Thứ 2 của tuần hiện tại
+    start_of_week = today.date() - timedelta(days=today.weekday())
+    week_dates = [start_of_week + timedelta(days=i) for i in range(7)] # Danh sách 7 ngày (T2 -> CN)
+    
+    # Cấu trúc dữ liệu cho bảng:
+    # timetable = {
+    #    'Morning': [ [Staff1, Staff2], [], [Staff3], ... ], (7 phần tử tương ứng 7 ngày)
+    #    'Afternoon': ...
+    # }
+    
+    shifts = ['Morning', 'Afternoon', 'Night']
+    shift_labels = {'Morning': 'Ca Sáng', 'Afternoon': 'Ca Chiều', 'Night': 'Ca Đêm'}
+    
+    timetable = []
+    
+    for shift_code in shifts:
+        row_data = {
+            'label': shift_labels[shift_code],
+            'days': []
+        }
+        for day in week_dates:
+            # Lấy tất cả nhân viên làm việc trong ca này, ngày này
+            staffs = StaffSchedule.objects.filter(date=day, shift=shift_code)
+            row_data['days'].append(staffs)
+        timetable.append(row_data)
 
     context = {
         'page_title': f'Báo cáo Quản trị - Tháng {current_month}',
         'occupied_count': occupied_rooms_count,
         'guest_month_count': guest_count_month,
         'revenue_month': total_revenue,
-        'schedules': schedules,
+        'week_dates': week_dates, # Gửi danh sách ngày để làm tiêu đề cột
+        'timetable': timetable,   # Dữ liệu bảng
         'today': today.date(),
     }
     return render(request, 'pms/management_dashboard.html', context)
+
+
+# 2. THÊM HÀM MỚI: add_staff_schedule
+@login_required
+def add_staff_schedule(request):
+    if request.method == 'POST':
+        form = StaffScheduleForm(request.POST)
+        if form.is_valid():
+            # 1. Lấy đối tượng lịch nhưng CHƯA lưu vào DB
+            schedule = form.save(commit=False)
+            
+            # 2. Lấy thông tin User người dùng đã chọn trong Dropdown
+            user_obj = form.cleaned_data['selected_user']
+            
+            # 3. Tự động điền tên nhân viên (Lấy họ tên thật, nếu không có thì lấy username)
+            if user_obj.first_name and user_obj.last_name:
+                schedule.staff_name = f"{user_obj.last_name} {user_obj.first_name}"
+            else:
+                schedule.staff_name = user_obj.username
+
+            # 4. Tự động điền chức vụ (Dựa trên quyền hạn)
+            # Nếu là Admin -> Gán là 'Lễ tân' (Hoặc bạn có thể logic khác)
+            # Vì model StaffSchedule đang dùng tiếng Anh (Reception/Guard...), ta gán giá trị tương ứng
+            if user_obj.is_superuser:
+                schedule.role = 'Reception' # Admin kiêm lễ tân
+            else:
+                schedule.role = 'Reception' # Nhân viên mặc định là lễ tân
+            
+            # 5. Lưu chính thức
+            schedule.save()
+            
+            messages.success(request, f"Đã xếp lịch cho {schedule.staff_name} thành công.")
+            return redirect('management-dashboard')
+    else:
+        form = StaffScheduleForm(initial={'date': timezone.now().date()})
+    
+    context = {
+        'page_title': 'Thêm Lịch làm việc',
+        'form': form
+    }
+    return render(request, 'pms/staff_schedule_form.html', context)
+
+@login_required
+def check_new_requests_count(request):
+    """
+    API trả về số lượng yêu cầu mới (status='New') để Web App polling
+    """
+    count = GuestRequest.objects.filter(status='New').count()
+    return JsonResponse({'count': count})
+
+@login_required
+def manage_staff(request):
+    # Chỉ Admin/Superuser mới được vào trang này
+    if not request.user.is_superuser:
+        messages.error(request, "Bạn không có quyền truy cập trang Quản lý Nhân sự.")
+        return redirect('dashboard')
+
+    if request.method == 'POST':
+        form = StaffUserForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            
+            # Phân quyền Group
+            role = form.cleaned_data['role']
+            if role == 'Manager':
+                user.is_superuser = True # Set làm admin
+                user.is_staff = True
+            else:
+                user.is_superuser = False # Nhân viên thường
+                user.is_staff = False
+            
+            user.save()
+            messages.success(request, f"Đã tạo tài khoản nhân viên {user.username} thành công.")
+            return redirect('manage-staff')
+    else:
+        form = StaffUserForm()
+    
+    # Lấy danh sách nhân viên (trừ admin hệ thống ra cho đỡ rối nếu muốn)
+    staff_list = User.objects.all().order_by('-date_joined')
+    
+    context = {
+        'page_title': 'Quản lý Nhân sự & Phân quyền',
+        'staff_list': staff_list,
+        'form': form
+    }
+    return render(request, 'pms/manage_staff.html', context)
+
+@login_required
+def delete_staff(request, user_id):
+    if not request.user.is_superuser:
+        return redirect('dashboard')
+        
+    user = get_object_or_404(User, id=user_id)
+    if user == request.user:
+        messages.error(request, "Không thể tự xóa chính mình!")
+    else:
+        user.delete()
+        messages.success(request, "Đã xóa nhân viên.")
+    return redirect('manage-staff')

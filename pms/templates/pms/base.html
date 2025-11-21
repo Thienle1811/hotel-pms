@@ -7,7 +7,7 @@
       body { font-family: sans-serif; margin: 0; display: flex; min-height: 100vh; }
       
       /* --- SIDEBAR CHUNG --- */
-      .sidebar { width: 250px; background-color: #343a40; color: white; padding: 20px; flex-shrink: 0; }
+      .sidebar { width: 250px; background-color: #343a40; color: white; padding: 20px; flex-shrink: 0; display: flex; flex-direction: column; }
       .sidebar h3 { margin-top: 0; border-bottom: 1px solid #495057; padding-bottom: 10px; }
       .sidebar a { color: white; text-decoration: none; display: block; padding: 10px 15px; margin-bottom: 5px; border-radius: 4px; transition: 0.2s; }
       .sidebar a:hover { background-color: #495057; padding-left: 20px; }
@@ -38,24 +38,51 @@
         <h3 style="text-align: center;">SmartCity HomeTel</h3>
         
         <div class="menu-label">Lễ tân</div>
-        <a href="{% url 'dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">📊 Sơ đồ Phòng</a>
-        <a href="{% url 'reservation-calendar' %}" class="{% if request.resolver_match.url_name == 'reservation-calendar' %}active{% endif %}">📅 Lịch Đặt phòng</a>
-        <a href="{% url 'manage-requests' %}" class="{% if request.resolver_match.url_name == 'manage-requests' %}active{% endif %}">🔔 Yêu cầu (QR)</a>
-        <a href="{% url 'manage-guests' %}" class="{% if request.resolver_match.url_name == 'manage-guests' %}active{% endif %}">👥 Khách hàng</a>
+        <a href="{% url 'dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+            📊 Sơ đồ Phòng
+        </a>
+        <a href="{% url 'reservation-calendar' %}" class="{% if request.resolver_match.url_name == 'reservation-calendar' %}active{% endif %}">
+            📅 Lịch Đặt phòng
+        </a>
+        <a href="{% url 'manage-requests' %}" class="{% if request.resolver_match.url_name == 'manage-requests' %}active{% endif %}">
+            🔔 Yêu cầu (QR)
+        </a>
+        <a href="{% url 'manage-guests' %}" class="{% if request.resolver_match.url_name == 'manage-guests' %}active{% endif %}">
+            👥 Khách hàng
+        </a>
 
-        <hr style="border-color: #495057; margin: 15px 0;">
+        {% if user.is_superuser %}
+            <hr style="border-color: #495057; margin: 15px 0;">
 
-        <div class="menu-label">Quản lý</div>
-        <a href="{% url 'management-dashboard' %}" class="{% if request.resolver_match.url_name == 'management-dashboard' %}active{% endif %}">📈 Báo cáo Quản trị</a>
-        <a href="{% url 'export-registry' %}" class="{% if request.resolver_match.url_name == 'export-registry' %}active{% endif %}">👮 Xuất File Tạm Trú</a>
+            <div class="menu-label" style="color: #ffc107;">Quản trị viên</div>
+            
+            <a href="{% url 'management-dashboard' %}" class="{% if request.resolver_match.url_name == 'management-dashboard' %}active{% endif %}">
+                📈 Báo cáo & Lịch
+            </a>
+            
+            <a href="{% url 'manage-staff' %}" class="{% if request.resolver_match.url_name == 'manage-staff' %}active{% endif %}">
+                👔 Quản lý Nhân sự
+            </a>
+            
+            <a href="{% url 'export-registry' %}" class="{% if request.resolver_match.url_name == 'export-registry' %}active{% endif %}">
+                👮 Xuất File Tạm Trú
+            </a>
 
-        <hr style="border-color: #495057; margin: 15px 0;">
-
-        <div class="menu-label">Cấu hình (Admin)</div>
-        <a href="{% url 'manage-rooms' %}" class="{% if request.resolver_match.url_name == 'manage-rooms' %}active{% endif %}">🛏️ Cấu hình Phòng</a>
-        <a href="{% url 'manage-service-inventory' %}" class="{% if request.resolver_match.url_name == 'manage-service-inventory' %}active{% endif %}">🍔 Menu Dịch vụ</a>
+            <div class="menu-label">Cấu hình</div>
+            
+            <a href="{% url 'manage-rooms' %}" class="{% if request.resolver_match.url_name == 'manage-rooms' %}active{% endif %}">
+                🛏️ Cấu hình Phòng
+            </a>
+            
+            <a href="{% url 'manage-service-inventory' %}" class="{% if request.resolver_match.url_name == 'manage-service-inventory' %}active{% endif %}">
+                🍔 Menu Dịch vụ
+            </a>
+        {% endif %}
 
         <div style="margin-top: auto;">
+            <div style="text-align: center; font-size: 0.9em; color: #ccc; margin-bottom: 5px;">
+                {% if user.is_superuser %} (Admin) {% else %} (Nhân viên) {% endif %}
+            </div>
             <a href="{% url 'logout' %}" class="logout-link">Đăng xuất ({{ user.username }})</a>
         </div>
     </div>
@@ -72,6 +99,68 @@
         {% block content %}
         {% endblock %}
     </div>
+
+    <audio id="notificationSound" src="https://assets.mixkit.co/sfx/preview/mixkit-software-interface-start-2574.mp3" preload="auto"></audio>
+
+    <script>
+        let lastCount = -1; // Khởi tạo -1 để lần đầu chạy không báo
+
+        function checkNewRequests() {
+            // Gọi API để lấy số lượng yêu cầu mới
+            fetch("{% url 'ajax-new-requests-count' %}")
+                .then(response => response.json())
+                .then(data => {
+                    const currentCount = data.count;
+                    
+                    // Lần đầu tải trang: chỉ cập nhật số lượng, không báo
+                    if (lastCount === -1) {
+                        lastCount = currentCount;
+                        return;
+                    }
+
+                    // Nếu số lượng tăng lên -> CÓ YÊU CẦU MỚI!
+                    if (currentCount > lastCount) {
+                        playNotification();
+                        showBrowserNotification(currentCount);
+                    }
+                    
+                    // Cập nhật lại số lượng để lần sau so sánh
+                    lastCount = currentCount;
+                })
+                .catch(error => console.error('Lỗi kiểm tra yêu cầu:', error));
+        }
+
+        function playNotification() {
+            const audio = document.getElementById('notificationSound');
+            // Các trình duyệt hiện đại chặn tự phát âm thanh nếu chưa tương tác
+            audio.play().catch(error => console.log('Chưa thể phát âm thanh do chính sách trình duyệt:', error));
+        }
+
+        function showBrowserNotification(count) {
+            if (!("Notification" in window)) return;
+
+            if (Notification.permission === "granted") {
+                new Notification("🛎️ CÓ YÊU CẦU MỚI!", {
+                    body: `Khách hàng đang gọi! Có ${count} yêu cầu chưa xử lý.`,
+                    icon: "https://cdn-icons-png.flaticon.com/512/3602/3602145.png" // Icon cái chuông
+                });
+            } else if (Notification.permission !== "denied") {
+                Notification.requestPermission().then(permission => {
+                    if (permission === "granted") {
+                        showBrowserNotification(count);
+                    }
+                });
+            }
+        }
+
+        // Xin quyền thông báo ngay khi mở trang
+        if ("Notification" in window && Notification.permission !== "denied") {
+            Notification.requestPermission();
+        }
+
+        // Chạy kiểm tra mỗi 10 giây (10000ms)
+        setInterval(checkNewRequests, 10000);
+    </script>
 
   </body>
 </html>
