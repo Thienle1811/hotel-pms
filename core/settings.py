@@ -12,7 +12,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Quick-start development settings - unsuitable for production
 # Cấu hình SECRET_KEY an toàn hơn khi triển khai
-SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-default-key-for-dev') 
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-default-key-for-dev')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 # Tự động chuyển DEBUG = False khi có biến môi trường
@@ -33,9 +33,9 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     # Thư viện cho static files
     'django.contrib.staticfiles',
-    
+
     # Ứng dụng quản lý khách sạn của bạn
-    'pms', 
+    'pms',
     'rest_framework',
     'rest_framework.authtoken',
 ]
@@ -43,11 +43,11 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     # Thêm WhiteNoise ở vị trí này, ngay sau SecurityMiddleware
-    'whitenoise.middleware.WhiteNoiseMiddleware', 
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware', 
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -57,7 +57,7 @@ ROOT_URLCONF = 'core.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'], 
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -101,8 +101,8 @@ AUTH_PASSWORD_VALIDATORS = [
 
 
 # Internationalization
-LANGUAGE_CODE = 'vi' 
-TIME_ZONE = 'Asia/Ho_Chi_Minh' 
+LANGUAGE_CODE = 'vi'
+TIME_ZONE = 'Asia/Ho_Chi_Minh'
 USE_I18N = True
 USE_TZ = True
 
@@ -127,6 +127,9 @@ SESSION_COOKIE_SECURE = True
 
 
 # CẤU HÌNH CHO HỆ THỐNG ĐĂNG NHẬP
-LOGIN_REDIRECT_URL = '/'      
-LOGOUT_REDIRECT_URL = '/login/' 
+LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/login/'
 LOGIN_URL = 'login'
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')

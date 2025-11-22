@@ -1,43 +1,32 @@
 {% extends 'pms/base.html' %}
-
 {% block title %}{{ page_title }}{% endblock %}
-
 {% block extra_css %}
-  .container { max-width: 600px; margin: 20px auto; background-color: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
+  .container { max-width: 600px; margin: 20px auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
   h2 { border-bottom: 2px solid #ccc; padding-bottom: 10px; margin-bottom: 20px; color: #333; }
   .form-field { margin-bottom: 15px; }
   label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; }
-  input, select { width: 100%; padding: 10px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
-  button { padding: 10px 20px; background-color: #007bff; color: white; border: none; cursor: pointer; border-radius: 5px; font-weight: bold; width: 100%; margin-top: 10px; }
-  button:hover { background-color: #0056b3; }
+  input, select { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+  button { padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 10px; }
   .back-link { display: block; text-align: center; margin-top: 15px; color: #dc3545; text-decoration: none; }
 {% endblock %}
 
 {% block content %}
     <div class="container">
       <h2>{{ page_title }}</h2>
-      
       <form method="POST" enctype="multipart/form-data">
         {% csrf_token %}
-
         {% for field in form %}
           <div class="form-field">
             {{ field.errors }}
             <label for="{{ field.id_for_label }}">{{ field.label }}:</label>
             {{ field }}
-            
             {% if field.name == 'photo' and field.value %}
-                <div style="margin-top: 10px; padding: 10px; background-color: #f9f9f9; border-radius: 5px;">
-                    <p style="font-size: 0.9em; color: #666; margin: 0 0 5px 0;">📸 Ảnh giấy tờ hiện tại:</p>
-                    <a href="/media/{{ field.value }}" target="_blank">
-                        <img src="/media/{{ field.value }}" alt="Ảnh giấy tờ" style="max-width: 100%; max-height: 200px; border: 1px solid #ddd; border-radius: 4px;">
-                    </a>
-                    <p style="font-size: 0.8em; color: #999; font-style: italic;">(Chọn file mới bên trên để thay thế ảnh này)</p>
+                <div style="margin-top: 5px;">
+                    <a href="/media/{{ field.value }}" target="_blank">Xem ảnh hiện tại</a>
                 </div>
             {% endif %}
           </div>
         {% endfor %}
-
         <button type="submit">Lưu Thay đổi</button>
         <a href="{% url 'manage-guests' %}" class="back-link">Hủy bỏ & Quay lại</a>
       </form>

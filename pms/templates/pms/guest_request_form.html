@@ -23,7 +23,7 @@
       }
       h2 { color: #007bff; text-align: center; margin-bottom: 5px; }
       .room-info { text-align: center; color: #666; margin-bottom: 20px; font-weight: bold;}
-      
+
       /* Style cho lưới nút bấm */
       .action-grid {
         display: grid;
@@ -31,7 +31,7 @@
         gap: 15px;
         margin-bottom: 25px;
       }
-      
+
       .action-btn {
         background-color: #f8f9fa;
         border: 1px solid #dee2e6;
@@ -46,11 +46,11 @@
         justify-content: center;
         height: 100px;
       }
-      
+
       .action-btn:active { background-color: #e2e6ea; transform: scale(0.98); }
       .action-btn i { font-size: 24px; margin-bottom: 8px; display: block; }
       .action-btn span { font-weight: bold; color: #333; font-size: 14px; }
-      
+
       /* Màu sắc riêng cho từng nút */
       .btn-laundry { border-color: #17a2b8; color: #17a2b8; }
       .btn-food { border-color: #ffc107; color: #ffc107; }
@@ -69,9 +69,9 @@
     <div class="container">
       <h2>Phòng {{ room.room_number }}</h2>
       <div class="room-info">Xin chào, {{ guest_name }}!</div>
-      
+
       <div class="action-grid">
-        <div class="action-btn btn-laundry" onclick="handleLaundry()">
+        <div class="action-btn btn-laundry" onclick="submitQuickRequest('Ủi đồ')">
             <span style="font-size: 30px;">👕</span>
             <span>Ủi đồ</span>
         </div>
@@ -123,7 +123,7 @@
             if (confirm("Bạn muốn gửi yêu cầu: " + serviceName + "?")) {
                 // Điền nội dung vào form ẩn
                 document.getElementById('hiddenContent').value = "Khách muốn: " + serviceName;
-                
+
                 // Submit form
                 document.getElementById('hiddenForm').submit();
             }

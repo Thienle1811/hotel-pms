@@ -17,7 +17,7 @@
       .logout-link:hover { background-color: #c82333; }
 
       /* --- NỘI DUNG CHÍNH --- */
-      .content { flex-grow: 1; padding: 30px; background-color: #f8f9fa; }
+      .content { flex-grow: 1; padding: 30px; background-color: #f8f9fa; position: relative; }
       
       /* --- CSS CHUNG CHO BẢNG VÀ NÚT --- */
       table { width: 100%; border-collapse: collapse; margin-top: 20px; background-color: white; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); }
@@ -27,6 +27,43 @@
       .btn-blue { background-color: #007bff; }
       .btn-green { background-color: #28a745; }
       .btn-red { background-color: #dc3545; }
+
+      /* --- POPUP THÔNG BÁO (MỚI) --- */
+      .overlay {
+          display: none; /* Mặc định ẩn */
+          position: fixed;
+          top: 0; left: 0; width: 100%; height: 100%;
+          background-color: rgba(0, 0, 0, 0.5); /* Nền tối mờ */
+          z-index: 9998;
+      }
+      .notification-popup {
+          display: none; /* Mặc định ẩn */
+          position: fixed;
+          top: 50%; left: 50%;
+          transform: translate(-50%, -50%);
+          background-color: white;
+          padding: 30px;
+          border-radius: 10px;
+          box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+          z-index: 9999;
+          text-align: center;
+          width: 400px;
+          border: 2px solid #dc3545;
+          animation: popin 0.3s ease-out;
+      }
+      @keyframes popin { from { transform: translate(-50%, -60%); opacity: 0; } to { transform: translate(-50%, -50%); opacity: 1; } }
+      
+      .popup-title { color: #dc3545; font-size: 24px; margin-bottom: 10px; font-weight: bold; }
+      .popup-message { font-size: 18px; margin-bottom: 25px; color: #333; }
+      .popup-btn {
+          background-color: #007bff; color: white; padding: 10px 20px;
+          border: none; border-radius: 5px; cursor: pointer; font-size: 16px; font-weight: bold;
+          text-decoration: none; display: inline-block;
+      }
+      .popup-btn:hover { background-color: #0056b3; }
+      .close-btn {
+          background-color: #6c757d; margin-left: 10px;
+      }
       
       /* CSS riêng của từng trang sẽ được chèn vào đây */
       {% block extra_css %}{% endblock %}
@@ -38,45 +75,22 @@
         <h3 style="text-align: center;">SmartCity HomeTel</h3>
         
         <div class="menu-label">Lễ tân</div>
-        <a href="{% url 'dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
-            📊 Sơ đồ Phòng
-        </a>
-        <a href="{% url 'reservation-calendar' %}" class="{% if request.resolver_match.url_name == 'reservation-calendar' %}active{% endif %}">
-            📅 Lịch Đặt phòng
-        </a>
-        <a href="{% url 'manage-requests' %}" class="{% if request.resolver_match.url_name == 'manage-requests' %}active{% endif %}">
-            🔔 Yêu cầu (QR)
-        </a>
-        <a href="{% url 'manage-guests' %}" class="{% if request.resolver_match.url_name == 'manage-guests' %}active{% endif %}">
-            👥 Khách hàng
-        </a>
+        <a href="{% url 'dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">📊 Sơ đồ Phòng</a>
+        <a href="{% url 'reservation-calendar' %}" class="{% if request.resolver_match.url_name == 'reservation-calendar' %}active{% endif %}">📅 Lịch Đặt phòng</a>
+        <a href="{% url 'manage-requests' %}" class="{% if request.resolver_match.url_name == 'manage-requests' %}active{% endif %}">🔔 Yêu cầu (QR)</a>
+        <a href="{% url 'manage-guests' %}" class="{% if request.resolver_match.url_name == 'manage-guests' %}active{% endif %}">👥 Khách hàng</a>
 
         {% if user.is_superuser %}
             <hr style="border-color: #495057; margin: 15px 0;">
 
             <div class="menu-label" style="color: #ffc107;">Quản trị viên</div>
-            
-            <a href="{% url 'management-dashboard' %}" class="{% if request.resolver_match.url_name == 'management-dashboard' %}active{% endif %}">
-                📈 Báo cáo & Lịch
-            </a>
-            
-            <a href="{% url 'manage-staff' %}" class="{% if request.resolver_match.url_name == 'manage-staff' %}active{% endif %}">
-                👔 Quản lý Nhân sự
-            </a>
-            
-            <a href="{% url 'export-registry' %}" class="{% if request.resolver_match.url_name == 'export-registry' %}active{% endif %}">
-                👮 Xuất File Tạm Trú
-            </a>
+            <a href="{% url 'management-dashboard' %}" class="{% if request.resolver_match.url_name == 'management-dashboard' %}active{% endif %}">📈 Báo cáo & Lịch</a>
+            <a href="{% url 'manage-staff' %}" class="{% if request.resolver_match.url_name == 'manage-staff' %}active{% endif %}">👔 Quản lý Nhân sự</a>
+            <a href="{% url 'export-registry' %}" class="{% if request.resolver_match.url_name == 'export-registry' %}active{% endif %}">👮 Xuất File Tạm Trú</a>
 
             <div class="menu-label">Cấu hình</div>
-            
-            <a href="{% url 'manage-rooms' %}" class="{% if request.resolver_match.url_name == 'manage-rooms' %}active{% endif %}">
-                🛏️ Cấu hình Phòng
-            </a>
-            
-            <a href="{% url 'manage-service-inventory' %}" class="{% if request.resolver_match.url_name == 'manage-service-inventory' %}active{% endif %}">
-                🍔 Menu Dịch vụ
-            </a>
+            <a href="{% url 'manage-rooms' %}" class="{% if request.resolver_match.url_name == 'manage-rooms' %}active{% endif %}">🛏️ Cấu hình Phòng</a>
+            <a href="{% url 'manage-service-inventory' %}" class="{% if request.resolver_match.url_name == 'manage-service-inventory' %}active{% endif %}">🍔 Menu Dịch vụ</a>
         {% endif %}
 
         <div style="margin-top: auto;">
@@ -96,70 +110,63 @@
             {% endfor %}
         {% endif %}
 
-        {% block content %}
-        {% endblock %}
+        {% block content %}{% endblock %}
+    </div>
+
+    <div id="overlay" class="overlay"></div>
+    <div id="notificationPopup" class="notification-popup">
+        <div class="popup-title">🔔 TING TING!</div>
+        <div class="popup-message" id="popupMessage">Có yêu cầu mới từ khách hàng!</div>
+        
+        <a href="{% url 'manage-requests' %}" class="popup-btn">Xem ngay</a>
+        <button onclick="closePopup()" class="popup-btn close-btn">Đóng</button>
     </div>
 
     <audio id="notificationSound" src="https://assets.mixkit.co/sfx/preview/mixkit-software-interface-start-2574.mp3" preload="auto"></audio>
 
     <script>
-        let lastCount = -1; // Khởi tạo -1 để lần đầu chạy không báo
+        let lastCount = -1; 
 
         function checkNewRequests() {
-            // Gọi API để lấy số lượng yêu cầu mới
             fetch("{% url 'ajax-new-requests-count' %}")
                 .then(response => response.json())
                 .then(data => {
                     const currentCount = data.count;
                     
-                    // Lần đầu tải trang: chỉ cập nhật số lượng, không báo
                     if (lastCount === -1) {
                         lastCount = currentCount;
                         return;
                     }
 
-                    // Nếu số lượng tăng lên -> CÓ YÊU CẦU MỚI!
+                    // Nếu có yêu cầu mới -> Hiện Popup
                     if (currentCount > lastCount) {
                         playNotification();
-                        showBrowserNotification(currentCount);
+                        showPopup(currentCount);
                     }
                     
-                    // Cập nhật lại số lượng để lần sau so sánh
                     lastCount = currentCount;
                 })
-                .catch(error => console.error('Lỗi kiểm tra yêu cầu:', error));
+                .catch(error => console.error('Lỗi polling:', error));
         }
 
         function playNotification() {
             const audio = document.getElementById('notificationSound');
-            // Các trình duyệt hiện đại chặn tự phát âm thanh nếu chưa tương tác
-            audio.play().catch(error => console.log('Chưa thể phát âm thanh do chính sách trình duyệt:', error));
+            audio.play().catch(e => console.log('Chưa tương tác, không thể phát tiếng'));
         }
 
-        function showBrowserNotification(count) {
-            if (!("Notification" in window)) return;
-
-            if (Notification.permission === "granted") {
-                new Notification("🛎️ CÓ YÊU CẦU MỚI!", {
-                    body: `Khách hàng đang gọi! Có ${count} yêu cầu chưa xử lý.`,
-                    icon: "https://cdn-icons-png.flaticon.com/512/3602/3602145.png" // Icon cái chuông
-                });
-            } else if (Notification.permission !== "denied") {
-                Notification.requestPermission().then(permission => {
-                    if (permission === "granted") {
-                        showBrowserNotification(count);
-                    }
-                });
-            }
+        function showPopup(count) {
+            document.getElementById('overlay').style.display = 'block';
+            document.getElementById('notificationPopup').style.display = 'block';
+            document.getElementById('popupMessage').innerText = `Khách hàng đang gọi! Có ${count} yêu cầu chưa xử lý.`;
         }
 
-        // Xin quyền thông báo ngay khi mở trang
-        if ("Notification" in window && Notification.permission !== "denied") {
-            Notification.requestPermission();
+        function closePopup() {
+            document.getElementById('overlay').style.display = 'none';
+            document.getElementById('notificationPopup').style.display = 'none';
         }
 
-        // Chạy kiểm tra mỗi 10 giây (10000ms)
-        setInterval(checkNewRequests, 10000);
+        // Kiểm tra mỗi 5 giây
+        setInterval(checkNewRequests, 5000);
     </script>
 
   </body>
