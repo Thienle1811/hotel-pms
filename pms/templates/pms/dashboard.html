@@ -67,4 +67,69 @@
     </div>
     {% endfor %}
   </div>
+
+<div id="registryOverlay" class="overlay"></div>
+<div id="registryReminderPopup" class="notification-popup">
+    <div class="popup-title" style="color: #dc3545;">⚠️ NHẮC NHỞ QUAN TRỌNG!</div>
+    <div class="popup-message" id="registryPopupMessage">
+        </div>
+    
+    <button onclick="closeRegistryReminder()" class="popup-btn close-btn" style="background-color: #007bff; margin-left: 0;">Đã Đọc</button>
+</div>
+
+<script>
+    // Hàm hiển thị thông báo
+    function showRegistryReminder(time) {
+        // Hiển thị lớp phủ và popup
+        document.getElementById('registryOverlay').style.display = 'block';
+        document.getElementById('registryReminderPopup').style.display = 'block';
+        
+        // Cập nhật tin nhắn 
+        document.getElementById('registryPopupMessage').innerHTML = 
+            `Đã đến giờ **${time}**. Vui lòng dành thời gian in file tạm trú cho khách lưu trú hôm nay và bàn giao cho ca tiếp theo.`;
+    }
+
+    // Hàm đóng thông báo
+    function closeRegistryReminder() {
+        document.getElementById('registryOverlay').style.display = 'none';
+        document.getElementById('registryReminderPopup').style.display = 'none';
+    }
+
+    // Kiểm tra và hiển thị thông báo
+    function checkAndShowRegistryReminder() {
+        var now = new Date();
+        var hours = now.getHours();
+        var minutes = now.getMinutes();
+        
+        // Tạo chuỗi thời gian HH:MM cho dễ so sánh
+        var currentTime = (hours < 10 ? '0' + hours : hours) + ':' + (minutes < 10 ? '0' + minutes : minutes);
+
+        // ĐỊNH NGHĨA CÁC MỐC THỜI GIAN NHẮC NHỞ THEO YÊU CẦU: 7:00 sáng (07:00) và 10:30 tối (22:30)
+        var reminderTimes = {
+            "07:00": "7:00 sáng",
+            "22:30": "10:30 tối"
+        };
+        
+        var targetTime = reminderTimes[currentTime];
+
+        if (targetTime) {
+            // Logic chống spam: Chỉ hiển thị một lần trong 5 phút
+            var reminderShownKey = 'registry_reminder_' + currentTime;
+            var lastShown = sessionStorage.getItem(reminderShownKey);
+            var fiveMinutes = 5 * 60 * 1000; 
+
+            if (!lastShown || (now.getTime() - lastShown) > fiveMinutes) {
+                showRegistryReminder(targetTime);
+                sessionStorage.setItem(reminderShownKey, now.getTime());
+            }
+        }
+    }
+
+    // Chạy kiểm tra mỗi 15 giây (để đảm bảo không bỏ lỡ mốc thời gian)
+    setInterval(checkAndShowRegistryReminder, 15000); 
+
+    // Chạy kiểm tra ngay khi tải trang
+    document.addEventListener('DOMContentLoaded', checkAndShowRegistryReminder);
+</script>
+
 {% endblock %}
