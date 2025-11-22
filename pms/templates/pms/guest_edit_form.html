@@ -2,12 +2,10 @@
 {% block title %}{{ page_title }}{% endblock %}
 {% block extra_css %}
   .container { max-width: 600px; margin: 20px auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-  h2 { border-bottom: 2px solid #ccc; padding-bottom: 10px; margin-bottom: 20px; color: #333; }
   .form-field { margin-bottom: 15px; }
-  label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; }
+  label { display: block; margin-bottom: 5px; font-weight: bold; }
   input, select { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
-  button { padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 10px; }
-  .back-link { display: block; text-align: center; margin-top: 15px; color: #dc3545; text-decoration: none; }
+  button { padding: 10px; background: #007bff; color: white; border: none; width: 100%; cursor: pointer; }
 {% endblock %}
 
 {% block content %}
@@ -20,15 +18,24 @@
             {{ field.errors }}
             <label for="{{ field.id_for_label }}">{{ field.label }}:</label>
             {{ field }}
-            {% if field.name == 'photo' and field.value %}
+            
+            {# --- Logic hiển thị ảnh mặt trước --- #}
+            {% if field.name == 'photo_front' and field.value %}
                 <div style="margin-top: 5px;">
-                    <a href="/media/{{ field.value }}" target="_blank">Xem ảnh hiện tại</a>
+                    <a href="/media/{{ field.value }}" target="_blank">Xem mặt trước hiện tại</a>
+                </div>
+            {% endif %}
+
+            {# --- Logic hiển thị ảnh mặt sau --- #}
+            {% if field.name == 'photo_back' and field.value %}
+                <div style="margin-top: 5px;">
+                    <a href="/media/{{ field.value }}" target="_blank">Xem mặt sau hiện tại</a>
                 </div>
             {% endif %}
           </div>
         {% endfor %}
         <button type="submit">Lưu Thay đổi</button>
-        <a href="{% url 'manage-guests' %}" class="back-link">Hủy bỏ & Quay lại</a>
+        <a href="{% url 'manage-guests' %}" style="display:block; text-align:center; margin-top:15px;">Hủy bỏ</a>
       </form>
     </div>
 {% endblock %}

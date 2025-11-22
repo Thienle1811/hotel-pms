@@ -4,24 +4,28 @@ from django.contrib.auth.models import User
 
 class GuestForm(forms.ModelForm):
     """
-    Form quản lý khách hàng (Phiên bản ổn định 1 ảnh).
+    Form quản lý khách hàng (Cập nhật: 2 ảnh CCCD).
     """
     class Meta:
         model = Guest
+        # QUAN TRỌNG: Đã xóa 'photo' và thay bằng 'photo_front', 'photo_back'
         fields = [
             'full_name', 'dob', 'id_type', 
-            'id_number', 'photo', 'license_plate', 'address', 'phone'
+            'id_number', 'photo_front', 'photo_back', 
+            'license_plate', 'address', 'phone'
         ]
         widgets = {
             'dob': forms.DateInput(attrs={'type': 'date'}),
-            # 👇 Xóa widget FileInput(attrs={'multiple': True}) gây lỗi
+            'full_name': forms.TextInput(attrs={'placeholder': 'Nguyễn Văn A'}),
+            'id_number': forms.TextInput(attrs={'placeholder': 'Số CCCD/Hộ chiếu'}),
         }
         labels = {
             'full_name': 'Họ và Tên',
             'dob': 'Ngày sinh',
             'id_type': 'Loại giấy tờ',
             'id_number': 'Mã số giấy tờ',
-            'photo': 'Ảnh giấy tờ (CCCD/Passport)',
+            'photo_front': 'Ảnh mặt trước (CCCD)',
+            'photo_back': 'Ảnh mặt sau (CCCD)',
             'address': 'Địa chỉ thường trú',
             'phone': 'Số điện thoại',
             'license_plate': 'Biển số xe',

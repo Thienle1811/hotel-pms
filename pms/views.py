@@ -16,6 +16,7 @@ from datetime import timedelta, date # Thêm date vào import
 from .forms import StaffScheduleForm # Import Form mới
 from django.contrib.auth.models import User, Group
 from .forms import StaffUserForm
+from django.forms import modelformset_factory
 
 import pandas as pd
 from io import BytesIO
@@ -110,50 +111,76 @@ def create_booking(request, room_id):
         messages.error(request, f"Phòng {room.room_number} đang bận.")
         return redirect('dashboard')
 
-    if request.method == 'POST':
-        # 👇 QUAN TRỌNG: Thêm request.FILES để nhận ảnh
-        guest_form = GuestForm(request.POST, request.FILES)
-        reservation_form = ReservationForm(request.POST)
+    # Tạo Formset cho khách đi kèm
+    GuestFormSet = modelformset_factory(Guest, form=GuestForm, extra=0)
 
-        if guest_form.is_valid() and reservation_form.is_valid():
+    if request.method == 'POST':
+        main_guest_form = GuestForm(request.POST, request.FILES, prefix='main')
+        reservation_form = ReservationForm(request.POST, prefix='res')
+        guest_formset = GuestFormSet(request.POST, request.FILES, queryset=Guest.objects.none(), prefix='others')
+
+        if main_guest_form.is_valid() and reservation_form.is_valid() and guest_formset.is_valid():
             try:
                 with transaction.atomic():
-                    # ... (Giữ nguyên logic lưu Guest và Reservation) ...
-                    guest_data = guest_form.cleaned_data
-                    # Logic xử lý ảnh và lưu guest (giống code cũ của bạn)
-                    guest_instance, created = Guest.objects.get_or_create(
-                        id_number=guest_data['id_number'],
-                        defaults=guest_data
+                    # 1. Xử lý Khách Chính
+                    main_data = main_guest_form.cleaned_data
+                    main_guest, created = Guest.objects.get_or_create(
+                        id_number=main_data['id_number'],
+                        defaults=main_data
                     )
                     if not created:
-                        # Cập nhật thông tin nếu khách cũ
-                        for key, value in guest_data.items():
-                            if key != 'id_number': # Không sửa ID
-                                setattr(guest_instance, key, value)
-                        # Lưu file ảnh mới nếu có
-                        if request.FILES.get('photo'):
-                             guest_instance.photo = request.FILES['photo']
-                        guest_instance.save()
+                        for key, value in main_data.items():
+                            if key != 'id_number' and value: setattr(main_guest, key, value)
+                        # Cập nhật 2 ảnh mới
+                        if request.FILES.get('main-photo_front'): main_guest.photo_front = request.FILES['main-photo_front']
+                        if request.FILES.get('main-photo_back'): main_guest.photo_back = request.FILES['main-photo_back']
+                        main_guest.save()
 
+                    # 2. Tạo Reservation
                     reservation = reservation_form.save(commit=False)
                     reservation.room = room
-                    reservation.guest = guest_instance
+                    reservation.guest = main_guest
                     reservation.save()
+                    
+                    reservation.occupants.add(main_guest) # Thêm khách chính vào danh sách ở
 
-                    # Cập nhật trạng thái phòng
+                    # 3. Xử lý Khách đi kèm (Formset)
+                    for form in guest_formset:
+                        if form.cleaned_data and form.cleaned_data.get('id_number'):
+                            other_data = form.cleaned_data
+                            other_guest, created = Guest.objects.get_or_create(
+                                id_number=other_data['id_number'],
+                                defaults=other_data
+                            )
+                            if not created:
+                                for key, value in other_data.items():
+                                    if key != 'id_number' and value: setattr(other_guest, key, value)
+                                if form.cleaned_data.get('photo_front'): other_guest.photo_front = form.cleaned_data['photo_front']
+                                if form.cleaned_data.get('photo_back'): other_guest.photo_back = form.cleaned_data['photo_back']
+                                other_guest.save()
+                            
+                            reservation.occupants.add(other_guest)
+
+                    # 4. Cập nhật trạng thái phòng
                     if reservation.status == 'Occupied': room.status = 'Occupied'
                     elif reservation.status == 'Confirmed': room.status = 'Booked'
                     room.save()
 
-                messages.success(request, "Tạo Booking thành công.")
+                messages.success(request, "Tạo Booking thành công với danh sách khách.")
                 return redirect('dashboard')
             except Exception as e:
-                messages.error(request, f"Lỗi: {e}")
+                messages.error(request, f"Lỗi hệ thống: {e}")
     else:
-        guest_form = GuestForm()
-        reservation_form = ReservationForm(initial={'check_in_date': timezone.now()})
+        main_guest_form = GuestForm(prefix='main')
+        reservation_form = ReservationForm(initial={'check_in_date': timezone.now()}, prefix='res')
+        guest_formset = GuestFormSet(queryset=Guest.objects.none(), prefix='others')
 
-    context = {'room': room, 'guest_form': guest_form, 'reservation_form': reservation_form}
+    context = {
+        'room': room, 
+        'main_guest_form': main_guest_form, 
+        'reservation_form': reservation_form,
+        'guest_formset': guest_formset
+    }
     return render(request, 'pms/booking_form.html', context)
 
 
@@ -273,44 +300,51 @@ def perform_check_out(request, reservation_id):
 @login_required
 def export_temporary_registry(request):
     """
-    Xuất file Excel chứa thông tin đăng ký tạm trú (dựa trên khách đang cư trú).
+    Xuất file Excel chứa thông tin đăng ký tạm trú (dựa trên danh sách occupants).
     """
-    reservations = Reservation.objects.filter(status='Occupied').select_related('guest', 'room')
+    # Thay đổi: Dùng prefetch_related để lấy danh sách nhiều người (occupants)
+    reservations = Reservation.objects.filter(status='Occupied').prefetch_related('occupants', 'room')
 
     data = []
+    stt = 1
     for res in reservations:
-        guest = res.guest
-        room = res.room
+        room_name = res.room.room_number
+        check_in = res.check_in_date.strftime('%d/%m/%Y')
+        
+        # --- LOGIC MỚI: Lặp qua tất cả người trong danh sách 'occupants' ---
+        # Nếu danh sách occupants trống (do dữ liệu cũ), fallback về khách chính
+        guests_to_export = res.occupants.all()
+        if not guests_to_export:
+            guests_to_export = [res.guest]
 
-        check_out = res.check_out_date.strftime('%d/%m/%Y') if res.check_out_date else timezone.now().strftime('%d/%m/%Y (Hiện tại)')
+        for guest in guests_to_export:
+            data.append({
+                'STT': stt,
+                'Họ và Tên': guest.full_name,
+                'Ngày sinh': guest.dob.strftime('%d/%m/%Y') if guest.dob else '',
+                'Loại giấy tờ': guest.get_id_type_display(),
+                'Mã số giấy tờ': guest.id_number,
+                'Biển số xe': guest.license_plate if guest.license_plate else '',
+                'Địa chỉ thường trú': guest.address,
+                'Số điện thoại': guest.phone,
+                'Thời gian cư trú': f"Từ {check_in}",
+                'Phòng': room_name,
+            })
+            stt += 1
 
-        data.append({
-            'STT': len(data) + 1,
-            'Họ và Tên': guest.full_name,
-            'Ngày sinh': guest.dob.strftime('%d/%m/%Y') if guest.dob else '',
-            'Loại giấy tờ': guest.get_id_type_display(),
-            'Mã số giấy tờ': guest.id_number,
-            'Biển số xe': guest.license_plate if guest.license_plate else '',
-            'Địa chỉ thường trú': guest.address,
-            'Số điện thoại': guest.phone,
-            'Thời gian cư trú': f"Từ {res.check_in_date.strftime('%d/%m/%Y')} đến {check_out}",
-            'Phòng': room.room_number,
-        })
-
+    # Tạo DataFrame và xuất file (Giữ nguyên phần dưới)
     df = pd.DataFrame(data)
-
     output = BytesIO()
     with pd.ExcelWriter(output, engine='openpyxl') as writer:
         sheet_name = 'DangKyTamTru'
         df.to_excel(writer, sheet_name=sheet_name, index=False)
-
+        
         worksheet = writer.sheets[sheet_name]
         for idx, col in enumerate(df.columns):
             max_len = max(df[col].astype(str).map(len).max(), len(col)) + 2
             worksheet.column_dimensions[chr(65 + idx)].width = max_len
 
     output.seek(0)
-
     response = HttpResponse(
         output.read(),
         content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
