@@ -1,6 +1,5 @@
 {% extends 'pms/base.html' %}
-
-{% block title %}{{ page_title }}{% endblock %}
+{% load humanize %} {% block title %}{{ page_title }}{% endblock %}
 
 {% block extra_css %}
   .status-Vacant { color: #28a745; font-weight: bold; }
@@ -35,7 +34,7 @@
         <td>{{ room.id }}</td>
         <td><strong>{{ room.room_number }}</strong></td>
         <td>{{ room.room_type }}</td>
-        <td>{{ room.price_per_night|floatformat:0 }}</td>
+        <td>{{ room.price_per_night|intcomma }}</td>
         <td class="status-{{ room.status }}">{{ room.get_status_display }}</td>
         <td class="actions">
           <a href="{% url 'room-qr-code' room.id %}" style="color: #28a745;">Xem QR</a> 

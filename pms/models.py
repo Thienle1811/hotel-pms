@@ -5,7 +5,6 @@ from io import BytesIO
 from django.core.files.base import ContentFile
 import os
 
-# ... (Giữ nguyên Model Hotel và Room như cũ) ...
 class Hotel(models.Model):
     name = models.CharField(max_length=255, verbose_name="Tên Khách sạn")
     code = models.CharField(max_length=50, unique=True, verbose_name="Mã Khách sạn") 
@@ -17,7 +16,7 @@ class Room(models.Model):
     room_number = models.CharField(max_length=10, unique=True, verbose_name="Số Phòng")
     room_type = models.CharField(max_length=50, verbose_name="Loại Phòng")
     price_per_night = models.DecimalField(max_digits=10, decimal_places=0, default=500000, verbose_name="Giá/Đêm")
-    STATUS_CHOICES = [('Vacant', 'Trống (Xanh)'), ('Dirty', 'Cần dọn (Xám)'), ('Occupied', 'Đang có khách (Đỏ)'), ('Booked', 'Đã đặt (Vàng)')]
+    STATUS_CHOICES = [('Vacant', 'Phòng Trống'), ('Dirty', 'Chờ Dọn Dẹp'), ('Occupied', 'Đang Có Khách'), ('Booked', 'Khách Đặt Trước')]
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Vacant', verbose_name="Trạng thái")
     def __str__(self): return f"Phòng {self.room_number} ({self.room_type})"
     class Meta: verbose_name = "2. Phòng"; verbose_name_plural = "2. Quản lý Phòng"; ordering = ['room_number']
@@ -32,7 +31,6 @@ class Guest(models.Model):
     address = models.CharField(max_length=500, verbose_name="Địa chỉ thường trú")
     phone = models.CharField(max_length=20, null=True, blank=True, verbose_name="Số điện thoại")
     
-    # --- THAY ĐỔI: Tách thành 2 ảnh ---
     photo_front = models.ImageField(upload_to='guest_ids/', null=True, blank=True, verbose_name="Ảnh mặt trước")
     photo_back = models.ImageField(upload_to='guest_ids/', null=True, blank=True, verbose_name="Ảnh mặt sau")
     
@@ -41,9 +39,8 @@ class Guest(models.Model):
     def __str__(self): return self.full_name
     class Meta: verbose_name = "3. Khách hàng"; verbose_name_plural = "3. Quản lý Khách hàng"
 
-    # Hàm hỗ trợ nén ảnh (dùng chung)
     def _compress_image(self, image_field):
-        if image_field and image_field.size > 100 * 1024: # Chỉ nén nếu > 100KB
+        if image_field and image_field.size > 100 * 1024:
             try:
                 img = Image.open(image_field)
                 if img.mode != 'RGB': img = img.convert('RGB')
@@ -52,7 +49,7 @@ class Guest(models.Model):
                     img.thumbnail(output_size)
                 
                 im_io = BytesIO()
-                img.save(im_io, format='JPEG', quality=60) # Quality 60 là đủ nét cho CCCD
+                img.save(im_io, format='JPEG', quality=60)
                 new_image = ContentFile(im_io.getvalue())
                 new_name = os.path.splitext(image_field.name)[0] + '.jpg'
                 image_field.save(new_name, new_image, save=False)
@@ -60,7 +57,6 @@ class Guest(models.Model):
                 print(f"Lỗi nén ảnh: {e}")
 
     def save(self, *args, **kwargs):
-        # Gọi hàm nén cho cả 2 ảnh trước khi lưu
         if self.photo_front: self._compress_image(self.photo_front)
         if self.photo_back: self._compress_image(self.photo_back)
         super().save(*args, **kwargs)
@@ -68,12 +64,15 @@ class Guest(models.Model):
 class Reservation(models.Model):
     room = models.ForeignKey('Room', on_delete=models.CASCADE, verbose_name="Phòng")
     guest = models.ForeignKey(Guest, on_delete=models.CASCADE, related_name='main_bookings', verbose_name="Người đặt chính")
-    
-    # --- THAY ĐỔI: Thêm danh sách người ở cùng ---
     occupants = models.ManyToManyField(Guest, related_name='stays', blank=True, verbose_name="Danh sách khách ở")
 
     check_in_date = models.DateTimeField(verbose_name="Thời gian Check-in")
     check_out_date = models.DateTimeField(null=True, blank=True, verbose_name="Thời gian Check-out dự kiến")
+    
+    # --- [MỚI] THÊM TRƯỜNG ĐẶT CỌC ---
+    deposit = models.DecimalField(max_digits=10, decimal_places=0, default=0, verbose_name="Tiền đặt cọc")
+    # ---------------------------------
+
     STATUS_CHOICES = [('Confirmed', 'Đã xác nhận'), ('Occupied', 'Đang cư trú'), ('Completed', 'Đã hoàn tất'), ('Cancelled', 'Đã hủy')]
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Confirmed', verbose_name="Trạng thái đặt phòng")
     note = models.TextField(blank=True, verbose_name="Ghi chú")

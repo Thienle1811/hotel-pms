@@ -1,4 +1,6 @@
 {% extends 'pms/base.html' %}
+{% load static %}
+{% load humanize %}
 
 {% block title %}{{ page_title }}{% endblock %}
 
@@ -6,114 +8,158 @@
   .room-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-top: 20px; }
   .room-card { padding: 20px; border-radius: 8px; text-align: center; color: white; position: relative; box-shadow: 0 4px 8px rgba(0,0,0,0.1); transition: transform 0.2s; }
   .room-card:hover { transform: translateY(-3px); }
-  .status-Vacant { background-color: #28a17a; }
-  .status-Booked { background-color: #ffc107; color: #343a40; }
-  .status-Occupied { background-color: #dc3545; }
-  .status-Dirty { background-color: #6c757d; }
+  
+  /* Màu sắc */
+  .status-Vacant { background-color: #28a17a; } /* Xanh: Trống */
+  .status-Booked { background-color: #ffc107; color: #343a40; } /* Vàng: Có khách hôm nay */
+  .status-Occupied { background-color: #dc3545; } /* Đỏ: Đang ở */
+  .status-Dirty { background-color: #6c757d; } /* Xám: Cần dọn (Vẫn giữ màu để phân biệt ngầm) */
+  
   .alerting { animation: blink 1s step-end infinite; }
   @keyframes blink { 0%, 100% { background-color: #ffc107; } 50% { background-color: #dc3545; color: white;} }
+  
   .card-actions { margin-top: 15px; }
   .card-actions a { display: block; padding: 8px; margin-top: 8px; background-color: rgba(255, 255, 255, 0.2); color: inherit; text-decoration: none; border-radius: 4px; font-weight: bold; }
   .card-actions a:hover { background-color: rgba(255, 255, 255, 0.4); }
   .quick-action-button { background-color: #007bff !important; color: white !important; }
+  
+  .btn-cancel-custom {
+      width: 100%; padding: 8px; margin-top: 8px;
+      background-color: rgba(255, 255, 255, 0.2);
+      color: inherit; border: 1px solid rgba(0,0,0,0.1);
+      border-radius: 4px; font-weight: bold; cursor: pointer;
+      display: block; text-decoration: none;
+  }
+  .btn-cancel-custom:hover { background-color: rgba(255, 255, 255, 0.4); }
 {% endblock %}
 
 {% block content %}
   <h2>{{ page_title }}</h2>
   
+  <div class="row mb-4">
+    <div class="col-md-12">
+        <span class="badge bg-success me-2 p-2" style="background-color: #28a17a;">Phòng Trống</span> 
+        <span class="badge bg-warning text-dark me-2 p-2" style="background-color: #ffc107;">Khách Đặt Trước (Hôm nay)</span>
+        <span class="badge bg-danger me-2 p-2" style="background-color: #dc3545;">Đang Có Khách</span>
+        </div>
+  </div>
+
   {% if not room_data %}
   <div style="padding: 20px; background-color: #fff3cd; border: 1px solid #ffeeba; color: #856404; border-radius: 5px;">
       <h3>⚠️ Chưa có dữ liệu phòng</h3>
-      <p>Vui lòng tạo Khách sạn và 7 Phòng trong trang Admin, sau đó Refresh trang này.</p>
+      <p>Vui lòng tạo Khách sạn và Phòng trong trang Quản lý.</p>
       <a href="{% url 'manage-rooms' %}" style="color: #007bff; font-weight: bold;">Tạo phòng ngay</a>
   </div>
   {% endif %}
 
   <div class="room-grid">
     {% for data in room_data %}
-    <div class="room-card status-{{ data.room.status }} {% if data.is_alerting %}alerting{% endif %}">
+    <div class="room-card status-{{ data.display_status }} {% if data.is_alerting %}alerting{% endif %}">
         <h3>Phòng {{ data.room.room_number }}</h3>
-        <p style="font-weight: bold;">{{ data.room.get_status_display }}</p>
+        
+        <p style="font-weight: bold; text-transform: uppercase; font-size: 0.9em;">
+            {% if data.display_status == 'Occupied' %}ĐANG CÓ KHÁCH
+            {% elif data.display_status == 'Booked' %}SẮP NHẬN PHÒNG
+            {% elif data.display_status == 'Dirty' %}PHÒNG TRỐNG
+            {% else %}PHÒNG TRỐNG{% endif %}
+        </p>
 
         {% if data.reservation %}
-            <p>Khách: {{ data.guest_name }}</p>
-            {% if data.room.status == 'Booked' %}
-                <p>Check-in: {{ data.reservation.check_in_date|date:"H:i d/m" }}</p>
-                {% if data.is_alerting %}
-                    <p style="font-weight: bold;">(SẮP CHECK-IN)</p>
-                {% endif %}
-            {% elif data.room.status == 'Occupied' %}
-                <p>Check-out D.kiến: 
-                    {% if data.reservation.check_out_date %}
-                        {{ data.reservation.check_out_date|date:"H:i d/m" }}
-                    {% else %}
-                        (Chưa xác định)
-                    {% endif %}
+            <div style="background: rgba(0,0,0,0.15); padding: 8px; border-radius: 6px; margin-bottom: 10px; font-size: 0.95em;">
+                <p style="margin: 0; font-weight: bold; border-bottom: 1px solid rgba(255,255,255,0.3); padding-bottom: 4px; margin-bottom: 4px;">
+                    {{ data.guest_name }}
                 </p>
-            {% endif %}
+                
+                {% if data.reservation.status == 'Occupied' %}
+                     <p style="margin: 0;">Check-out: {{ data.reservation.check_out_date|date:"H:i d/m" }}</p>
+                
+                {% elif data.reservation.status == 'Confirmed' %}
+                     <p style="margin: 0;">
+                        Vào: {{ data.reservation.check_in_date|date:"H:i d/m" }}
+                        {% if data.is_alerting %} 
+                            <br><span style="color: #fff; font-weight:bold; background: #dc3545; padding: 0 4px; border-radius: 3px; font-size: 0.8em;">SẮP ĐẾN</span> 
+                        {% endif %}
+                     </p>
+                     
+                     {% if data.display_status == 'Vacant' %}
+                        <div style="margin-top: 4px; font-style: italic; font-size: 0.85em; color: #e0ffe0;">
+                            (Booking sắp tới)
+                        </div>
+                     {% endif %}
+                {% endif %}
+            </div>
+        {% else %}
+            <div style="height: 60px; display: flex; align-items: center; justify-content: center; opacity: 0.8;">
+                Giá: {{ data.room.price_per_night|intcomma }}
+            </div>
         {% endif %}
 
         <div class="card-actions">
-            {% if data.room.status == 'Vacant' or data.room.status == 'Dirty' %}
-                <a href="{% url 'create-booking' data.room.id %}" class="quick-action-button">Tạo Booking/Check-in</a>
-            {% elif data.room.status == 'Booked' %}
-                <a href="{% url 'perform-check-in' data.reservation.id %}" class="quick-action-button">Check-in</a>
-                <a href="#">Hủy Booking</a>
-            {% elif data.room.status == 'Occupied' %}
-                <a href="{% url 'manage-room-services' data.reservation.id %}">Thêm Dịch vụ</a> 
-                <a href="{% url 'billing-details' data.reservation.id %}" class="quick-action-button">Check-out (Hóa đơn)</a>
+            {% if data.display_status == 'Vacant' or data.display_status == 'Dirty' %}
+                <a href="{% url 'create-booking' data.room.id %}" class="quick-action-button">
+                    <i class="fas fa-plus"></i> Tạo Booking Mới
+                </a>
+                
+                {% if data.reservation %}
+                    <a href="{% url 'perform-check-in' data.reservation.id %}" style="font-size: 0.9em; border: 1px dashed white;">
+                        Check-in: {{ data.guest_name }}
+                    </a>
+                {% endif %}
+                
+                {% if data.display_status == 'Dirty' %}
+                    <a href="{% url 'room-edit' data.room.id %}" style="opacity: 0.7; font-size: 0.8em;">(Xác nhận đã dọn)</a>
+                {% endif %}
+
+            {% elif data.display_status == 'Booked' %}
+                <a href="{% url 'perform-check-in' data.reservation.id %}" class="quick-action-button">
+                    Check-in Ngay
+                </a>
+                
+                <form action="{% url 'cancel-booking' data.reservation.id %}" method="POST" onsubmit="return confirm('Bạn chắc chắn muốn HỦY đặt phòng của {{ data.guest_name }}?');">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-cancel-custom">Hủy Booking</button>
+                </form>
+
+            {% elif data.display_status == 'Occupied' %}
+                <a href="{% url 'manage-room-services' data.reservation.id %}">Dịch vụ & Phụ phí</a> 
+                <a href="{% url 'billing-details' data.reservation.id %}" class="quick-action-button">Thanh toán / Trả phòng</a>
             {% endif %}
         </div>
     </div>
     {% endfor %}
   </div>
 
-<div id="registryOverlay" class="overlay"></div>
-<div id="registryReminderPopup" class="notification-popup">
-    <div class="popup-title" style="color: #dc3545;">⚠️ NHẮC NHỞ QUAN TRỌNG!</div>
-    <div class="popup-message" id="registryPopupMessage">
-        </div>
-    
-    <button onclick="closeRegistryReminder()" class="popup-btn close-btn" style="background-color: #007bff; margin-left: 0;">Đã Đọc</button>
+<div id="registryOverlay" class="overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999;"></div>
+<div id="registryReminderPopup" class="notification-popup" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 15px rgba(0,0,0,0.3); z-index: 1000; width: 300px; text-align: center;">
+    <div class="popup-title" style="color: #dc3545; font-weight: bold; font-size: 1.2em; margin-bottom: 10px;">⚠️ NHẮC NHỞ QUAN TRỌNG!</div>
+    <div class="popup-message" id="registryPopupMessage" style="margin-bottom: 20px;"></div>
+    <button onclick="closeRegistryReminder()" class="popup-btn close-btn" style="background-color: #007bff; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">Đã Đọc</button>
 </div>
 
 <script>
-    // Hàm hiển thị thông báo
     function showRegistryReminder(time) {
-        // Hiển thị lớp phủ và popup
         document.getElementById('registryOverlay').style.display = 'block';
         document.getElementById('registryReminderPopup').style.display = 'block';
-        
-        // Cập nhật tin nhắn 
         document.getElementById('registryPopupMessage').innerHTML = 
             `Đã đến giờ **${time}**. Vui lòng dành thời gian in file tạm trú cho khách lưu trú hôm nay và bàn giao cho ca tiếp theo.`;
     }
 
-    // Hàm đóng thông báo
     function closeRegistryReminder() {
         document.getElementById('registryOverlay').style.display = 'none';
         document.getElementById('registryReminderPopup').style.display = 'none';
     }
 
-    // Kiểm tra và hiển thị thông báo
     function checkAndShowRegistryReminder() {
         var now = new Date();
         var hours = now.getHours();
         var minutes = now.getMinutes();
-        
-        // Tạo chuỗi thời gian HH:MM cho dễ so sánh
         var currentTime = (hours < 10 ? '0' + hours : hours) + ':' + (minutes < 10 ? '0' + minutes : minutes);
 
-        // ĐỊNH NGHĨA CÁC MỐC THỜI GIAN NHẮC NHỞ THEO YÊU CẦU: 7:00 sáng (07:00) và 10:30 tối (22:30)
-        var reminderTimes = {
-            "07:00": "7:00 sáng",
-            "22:30": "10:30 tối"
-        };
+        var reminderTimes = { "07:00": "7:00 sáng", "22:30": "10:30 tối" };
         
         var targetTime = reminderTimes[currentTime];
 
         if (targetTime) {
-            // Logic chống spam: Chỉ hiển thị một lần trong 5 phút
             var reminderShownKey = 'registry_reminder_' + currentTime;
             var lastShown = sessionStorage.getItem(reminderShownKey);
             var fiveMinutes = 5 * 60 * 1000; 
@@ -124,11 +170,7 @@
             }
         }
     }
-
-    // Chạy kiểm tra mỗi 15 giây (để đảm bảo không bỏ lỡ mốc thời gian)
     setInterval(checkAndShowRegistryReminder, 15000); 
-
-    // Chạy kiểm tra ngay khi tải trang
     document.addEventListener('DOMContentLoaded', checkAndShowRegistryReminder);
 </script>
 

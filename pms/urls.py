@@ -87,4 +87,6 @@ urlpatterns = [
     path('management/schedule/add/', views.add_staff_schedule, name='add-staff-schedule'),
     path('management/staff/', views.manage_staff, name='manage-staff'),
     path('management/staff/delete/<int:user_id>/', views.delete_staff, name='delete-staff'),
+    path('booking/cancel/<int:reservation_id>/', views.cancel_booking, name='cancel-booking'),
+    path('booking-management/', views.booking_management, name='booking-management'),
 ]

@@ -1,0 +1,122 @@
+{% extends 'pms/base.html' %}
+{% load humanize %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .calendar-container {
+        max-height: 80vh; overflow-y: auto; position: relative;
+        border: 1px solid #ddd; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        background: white;
+    }
+    .calendar-table { width: 100%; border-collapse: collapse; border-spacing: 0; }
+    .calendar-table th, .calendar-table td { border: 1px solid #dee2e6; padding: 8px; text-align: center; vertical-align: middle; min-width: 100px; }
+    
+    .calendar-table thead th {
+        position: sticky; top: 0; background-color: #343a40; color: white; z-index: 20; box-shadow: 0 2px 2px rgba(0,0,0,0.1); padding: 10px;
+    }
+    .col-date {
+        position: sticky; left: 0; z-index: 10; background-color: #f8f9fa; font-weight: bold; min-width: 100px; border-right: 2px solid #dee2e6;
+    }
+    .calendar-table thead th:first-child { position: sticky; left: 0; z-index: 30; background-color: #343a40; }
+
+    .today-row .col-date { background-color: #e8f5e9 !important; color: #28a745; border-left: 5px solid #28a745; }
+    .weekend-row .col-date { color: #dc3545; background-color: #fff5f5; }
+
+    .cell-booking {
+        display: block; width: 100%; padding: 6px 4px; border-radius: 4px; color: white; text-decoration: none; font-size: 0.85rem; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }
+    .cell-booking:hover { opacity: 0.9; transform: translateY(-1px); color: white; }
+    
+    .bg-warning { background-color: #ffc107 !important; color: #212529 !important; } /* Đặt trước (Chưa cọc) */
+    .bg-primary { background-color: #0d6efd !important; } /* Đặt trước (Đã cọc) */
+    .bg-danger { background-color: #dc3545 !important; } /* Đang ở */
+
+    .cell-empty { height: 100%; min-height: 40px; background-color: transparent; cursor: cell; position: relative; }
+    .cell-empty:hover { background-color: #f1f3f5; }
+    .btn-add-cell { display: none; width: 100%; height: 100%; align-items: center; justify-content: center; color: #adb5bd; font-size: 1.2rem; text-decoration: none; }
+    .cell-empty:hover .btn-add-cell { display: flex; }
+    .btn-add-cell:hover { color: #28a745; font-weight: bold; }
+
+    .btn-quick-add {
+        display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; background-color: #28a745; color: white; border-radius: 50%; font-size: 14px; text-decoration: none; margin-left: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.2); transition: transform 0.2s; vertical-align: middle;
+    }
+    .btn-quick-add:hover { background-color: #218838; transform: scale(1.1); color: white; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">{{ page_title }}</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+            <a href="?start_date={{ prev_date }}" class="btn btn-sm btn-outline-secondary"><i class="fas fa-chevron-left"></i> 15 Ngày Trước</a>
+            <a href="?start_date={{ today_str }}" class="btn btn-sm btn-outline-primary">Hôm nay</a>
+            <a href="?start_date={{ next_date }}" class="btn btn-sm btn-outline-secondary">15 Ngày Sau <i class="fas fa-chevron-right"></i></a>
+        </div>
+    </div>
+</div>
+
+<div class="mb-3 d-flex align-items-center">
+    <span class="badge bg-warning text-dark me-2 p-2">Khách Đặt (Chưa cọc)</span>
+    <span class="badge bg-primary me-2 p-2">Đã Đặt Cọc</span>
+    <span class="badge bg-danger me-2 p-2">Đang Ở (Occupied)</span>
+    <small class="text-muted ms-2 fst-italic"><i class="fas fa-info-circle"></i> Click vào ô trống hoặc nút (+) màu xanh để đặt phòng nhanh.</small>
+</div>
+
+<div class="calendar-container">
+    <table class="calendar-table">
+        <thead>
+            <tr>
+                <th style="min-width: 120px;">Ngày \ Phòng</th>
+                {% for room in rooms %}
+                    <th>
+                        <div class="d-flex align-items-center justify-content-center">
+                            <span>{{ room.room_number }}</span>
+                            <a href="{% url 'create-booking' room.id %}" class="btn-quick-add" title="Tạo Booking mới cho phòng {{ room.room_number }}"><i class="fas fa-plus"></i></a>
+                        </div>
+                        <div style="font-weight: normal; font-size: 0.75em; opacity: 0.8; margin-top: 2px;">{{ room.room_type }}</div>
+                    </th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in calendar_data %}
+            <tr class="{% if row.is_today %}today-row{% endif %} {% if row.is_weekend %}weekend-row{% endif %}">
+                <td class="col-date">
+                    <div style="font-size: 1.1em;">{{ row.date|date:"d/m" }}</div>
+                    <div style="font-size: 0.8em; font-weight: normal; color: #6c757d;">{{ row.date|date:"l" }}</div>
+                </td>
+                {% for cell in row.room_cells %}
+                <td style="padding: 4px;">
+                    {% if cell.booking %}
+                        {% if cell.booking.status == 'Occupied' %}
+                             <a href="{% url 'billing-details' cell.booking.id %}" class="cell-booking {{ cell.status_class }}" title="Đang ở: {{ cell.booking.guest.full_name }} (Đến {{ cell.booking.check_out_date|date:'d/m' }})"><i class="fas fa-user"></i> {{ cell.booking.guest.full_name }}</a>
+                        
+                        {% else %}
+                             <a href="{% url 'perform-check-in' cell.booking.id %}" 
+                                class="cell-booking {{ cell.status_class }}" 
+                                title="Đặt trước: {{ cell.booking.guest.full_name }} (Vào {{ cell.booking.check_in_date|date:'H:i' }})"
+                                onclick="return confirm('Xác nhận CHECK-IN NGAY cho khách {{ cell.booking.guest.full_name }}?');">
+                                <i class="fas fa-clock"></i> {{ cell.booking.guest.full_name }}
+                             </a>
+                        {% endif %}
+                    {% else %}
+                        <div class="cell-empty">
+                            <a href="{% url 'create-booking' cell.room.id %}?check_in={{ cell.date_str }}" 
+                               class="btn-add-cell" 
+                               title="Đặt phòng ngày {{ cell.date_str }}"
+                               onclick="return confirm('Xác nhận: Tạo Đặt phòng mới cho Phòng {{ cell.room.room_number }} vào ngày {{ cell.date_str }}?');">
+                                <i class="fas fa-plus"></i>
+                            </a>
+                        </div>
+                    {% endif %}
+                </td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

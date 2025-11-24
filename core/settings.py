@@ -33,6 +33,9 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     # Thư viện cho static files
     'django.contrib.staticfiles',
+    
+    # Thư viện hỗ trợ định dạng số tiền (intcomma)
+    'django.contrib.humanize',
 
     # Ứng dụng quản lý khách sạn của bạn
     'pms',
@@ -101,10 +104,47 @@ AUTH_PASSWORD_VALIDATORS = [
 
 
 # Internationalization
+# https://docs.djangoproject.com/en/5.1/topics/i18n/
+
 LANGUAGE_CODE = 'vi'
+
 TIME_ZONE = 'Asia/Ho_Chi_Minh'
+
 USE_I18N = True
+
 USE_TZ = True
+
+
+# ==============================================================
+# CẤU HÌNH ĐỊNH DẠNG NGÀY GIỜ (24H) & SỐ HỌC
+# ==============================================================
+
+# 1. Tắt USE_L10N để Django không tự động format theo vùng miền mặc định
+# (Giúp ép buộc sử dụng các format mình định nghĩa bên dưới)
+USE_L10N = False 
+
+# 2. Định dạng hiển thị trên Web (Template)
+# 'H' là giờ 24h (00-23), 'h' là giờ 12h (01-12), 'A' là AM/PM
+DATE_FORMAT = 'd/m/Y'           # Ví dụ: 25/11/2023
+DATETIME_FORMAT = 'd/m/Y H:i'   # Ví dụ: 25/11/2023 14:30
+TIME_FORMAT = 'H:i'             # Ví dụ: 14:30
+
+# 3. Định dạng nhập liệu (Forms) - Để bạn nhập tay được
+DATE_INPUT_FORMATS = ['%d/%m/%Y', '%Y-%m-%d']
+DATETIME_INPUT_FORMATS = [
+    '%d/%m/%Y %H:%M',       # Ưu tiên dạng ngày/tháng/năm giờ:phút
+    '%d/%m/%Y %H:%M:%S',
+    '%Y-%m-%d %H:%M',       # Hỗ trợ thêm dạng năm-tháng-ngày (chuẩn input HTML5)
+    '%Y-%m-%d %H:%M:%S',
+]
+TIME_INPUT_FORMATS = ['%H:%M', '%H:%M:%S']
+
+# 4. Định dạng số tiền (Dấu phẩy ngăn cách hàng nghìn)
+# (Giữ lại cấu hình này để số tiền hiển thị đẹp: 1,000,000)
+USE_THOUSAND_SEPARATOR = True
+THOUSAND_SEPARATOR = ','
+DECIMAL_SEPARATOR = '.'
+NUMBER_GROUPING = 3
 
 
 # Static files (CSS, JavaScript, Images)

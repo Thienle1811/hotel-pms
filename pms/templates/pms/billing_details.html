@@ -1,3 +1,4 @@
+{% load humanize %} 
 <!DOCTYPE html>
 <html lang="vi">
   <head>
@@ -54,26 +55,33 @@
         <tbody>
           <tr>
             <td>Tiền phòng</td>
-            <td>{{ bill.num_nights }} đêm x {{ bill.room_rate|floatformat:0 }} VND</td>
-            <td style="text-align: right;">{{ bill.total_room_cost|floatformat:0 }}</td>
+            <td>{{ bill.num_nights }} đêm x {{ bill.room_rate|intcomma }} VND</td>
+            <td style="text-align: right;">{{ bill.total_room_cost|intcomma }}</td>
           </tr>
           
           {% for charge in bill.service_charges %}
           <tr>
             <td>Phí dịch vụ</td>
-            <td>{{ charge.item_name }} x {{ charge.quantity }} ({{ charge.price|floatformat:0 }})</td>
-            <td style="text-align: right;">{{ charge.total_price|floatformat:0 }}</td>
+            <td>{{ charge.item_name }} x {{ charge.quantity }} ({{ charge.price|intcomma }})</td>
+            <td style="text-align: right;">{{ charge.total_price|intcomma }}</td>
           </tr>
           {% endfor %}
 
           <tr class="total-row">
-            <td colspan="2" style="text-align: right;">TỔNG PHÍ DỊCH VỤ</td>
-            <td style="text-align: right;">{{ bill.total_service_cost|floatformat:0 }}</td>
+            <td colspan="2" style="text-align: right;">TỔNG CỘNG CHI PHÍ</td>
+            <td style="text-align: right;">{{ bill.grand_total|intcomma }}</td>
           </tr>
 
+          {% if bill.deposit > 0 %}
+          <tr>
+            <td colspan="2" style="text-align: right; color: #28a745; font-style: italic;">Đã đặt cọc / Thanh toán trước</td>
+            <td style="text-align: right; color: #28a745;">- {{ bill.deposit|intcomma }}</td>
+          </tr>
+          {% endif %}
+
           <tr class="final-total">
-            <td colspan="2" style="text-align: right;">TỔNG THANH TOÁN CUỐI CÙNG</td>
-            <td style="text-align: right;">{{ bill.final_bill|floatformat:0 }} VND</td>
+            <td colspan="2" style="text-align: right;">SỐ TIỀN CÒN PHẢI THANH TOÁN</td>
+            <td style="text-align: right;">{{ bill.final_bill|intcomma }} VND</td>
           </tr>
         </tbody>
       </table>

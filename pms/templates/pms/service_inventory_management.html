@@ -1,6 +1,5 @@
 {% extends 'pms/base.html' %}
-
-{% block title %}{{ page_title }}{% endblock %}
+{% load humanize %} {% block title %}{{ page_title }}{% endblock %}
 
 {% block extra_css %}
   .header-actions { margin-bottom: 20px; text-align: right; }
@@ -29,7 +28,7 @@
       <tr>
         <td>{{ forloop.counter }}</td>
         <td><strong>{{ item.item_name }}</strong></td>
-        <td>{{ item.price|floatformat:0 }}</td>
+        <td>{{ item.price|intcomma }}</td>
         <td class="actions">
           <a href="{% url 'service-item-edit' item.id %}">Sửa</a>
           <form action="{% url 'service-item-delete' item.id %}" method="POST" style="display: inline;" onsubmit="return confirm('Bạn có chắc muốn xóa dịch vụ này?');">

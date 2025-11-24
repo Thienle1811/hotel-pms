@@ -3,19 +3,16 @@ from .models import Guest, Reservation, ServiceCharge, ServiceItem, StaffSchedul
 from django.contrib.auth.models import User
 
 class GuestForm(forms.ModelForm):
-    """
-    Form quản lý khách hàng (Cập nhật: 2 ảnh CCCD).
-    """
     class Meta:
         model = Guest
-        # QUAN TRỌNG: Đã xóa 'photo' và thay bằng 'photo_front', 'photo_back'
         fields = [
             'full_name', 'dob', 'id_type', 
             'id_number', 'photo_front', 'photo_back', 
             'license_plate', 'address', 'phone'
         ]
         widgets = {
-            'dob': forms.DateInput(attrs={'type': 'date'}),
+            # Sử dụng class 'datepicker' cho ngày sinh
+            'dob': forms.DateInput(attrs={'class': 'datepicker', 'placeholder': 'dd/mm/yyyy'}, format='%d/%m/%Y'),
             'full_name': forms.TextInput(attrs={'placeholder': 'Nguyễn Văn A'}),
             'id_number': forms.TextInput(attrs={'placeholder': 'Số CCCD/Hộ chiếu'}),
         }
@@ -34,17 +31,29 @@ class GuestForm(forms.ModelForm):
 class ReservationForm(forms.ModelForm):
     class Meta:
         model = Reservation
-        fields = ['check_in_date', 'check_out_date', 'status', 'note']
+        fields = ['check_in_date', 'check_out_date', 'deposit', 'status', 'note']
+        
         widgets = {
-            'check_in_date': forms.DateTimeInput(attrs={'type': 'datetime-local'}, format='%Y-%m-%dT%H:%M'),
-            'check_out_date': forms.DateTimeInput(attrs={'type': 'datetime-local'}, format='%Y-%m-%dT%H:%M'),
+            # --- [THAY ĐỔI] Dùng class 'datetimepicker' thay vì type='datetime-local' ---
+            'check_in_date': forms.DateTimeInput(
+                attrs={'class': 'datetimepicker', 'placeholder': 'Chọn giờ vào...'}, 
+                format='%d/%m/%Y %H:%M'
+            ),
+            'check_out_date': forms.DateTimeInput(
+                attrs={'class': 'datetimepicker', 'placeholder': 'Chọn giờ ra...'}, 
+                format='%d/%m/%Y %H:%M'
+            ),
+            # ---------------------------------------------------------------------------
+            'deposit': forms.NumberInput(attrs={'min': 0, 'step': 10000, 'placeholder': 'Nhập số tiền cọc (nếu có)'}),
         }
         labels = {
             'check_in_date': 'Thời gian Check-in',
             'check_out_date': 'Thời gian Check-out dự kiến',
+            'deposit': 'Tiền đặt cọc (VND)', 
             'status': 'Trạng thái',
             'note': 'Ghi chú',
         }
+    
     def clean(self):
         cleaned_data = super().clean()
         check_in = cleaned_data.get("check_in_date")

@@ -1,6 +1,5 @@
 {% extends 'pms/base.html' %}
-
-{% block title %}{{ page_title }}{% endblock %}
+{% load humanize %} {% block title %}{{ page_title }}{% endblock %}
 
 {% block extra_css %}
   .service-form-container { border: 1px solid #ccc; padding: 20px; border-radius: 8px; margin-bottom: 30px; background-color: white; }
@@ -22,8 +21,8 @@
         <select id="quick-select" onchange="selectService()" style="width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px;">
             <option value="">-- Chọn món để tự điền --</option>
             {% for item in inventory_items %}
-                <option value="{{ item.item_name }}" data-price="{{ item.price|floatformat:0 }}">
-                    {{ item.item_name }} - {{ item.price|floatformat:0 }} VND
+                <option value="{{ item.item_name }}" data-price="{{ item.price|intcomma }}">
+                    {{ item.item_name }} - {{ item.price|intcomma }} VND
                 </option>
             {% endfor %}
         </select>
@@ -57,6 +56,8 @@
         if (selectedOption.value !== "") {
             document.getElementById("id_item_name").value = selectedOption.value;
             var price = selectedOption.getAttribute("data-price");
+            // Logic Javascript này sẽ tự động loại bỏ dấu phẩy do intcomma tạo ra
+            // nên bạn yên tâm là form vẫn submit số đúng.
             document.getElementById("id_price").value = price.replace(/,/g, '').replace(/\./g, '');
         }
     }
@@ -80,8 +81,8 @@
         <td>{{ forloop.counter }}</td>
         <td>{{ charge.item_name }}</td>
         <td>{{ charge.quantity }}</td>
-        <td>{{ charge.price|floatformat:0|default:"0" }}</td>
-        <td>{{ charge.total_price|floatformat:0|default:"0" }}</td>
+        <td>{{ charge.price|intcomma|default:"0" }}</td>
+        <td>{{ charge.total_price|intcomma|default:"0" }}</td>
         <td>{{ charge.created_at|date:"H:i d/m" }}</td>
       </tr>
       {% empty %}
@@ -91,7 +92,7 @@
       {% endfor %}
       <tr class="total-row">
         <td colspan="4" style="text-align: right;">TỔNG CỘNG PHÍ DỊCH VỤ:</td>
-        <td>{{ total_service_cost|floatformat:0|default:"0" }}</td>
+        <td>{{ total_service_cost|intcomma|default:"0" }}</td>
         <td></td>
       </tr>
     </tbody>
