@@ -762,3 +762,71 @@ def delete_staff(request, user_id):
     if user == request.user: messages.error(request, "Không thể tự xóa chính mình!")
     else: user.delete(); messages.success(request, "Đã xóa nhân viên.")
     return redirect('manage-staff')
+
+# pms/views.py
+
+@login_required
+def dashboard(request):
+    rooms = Room.objects.all().order_by('room_number')
+    all_reservations = Reservation.objects.filter(
+        status__in=['Confirmed', 'Occupied']
+    ).select_related('guest').order_by('check_in_date')
+
+    room_data = []
+    CHECKIN_ALERT_WINDOW = timezone.timedelta(minutes=30)
+    now = timezone.now()
+
+    for room in rooms:
+        current_res = all_reservations.filter(room=room, status='Occupied').first()
+        if not current_res:
+            current_res = all_reservations.filter(room=room, status='Confirmed').first()
+
+        is_alerting = False
+        display_status = room.status 
+
+        if current_res:
+            if current_res.status == 'Occupied':
+                display_status = 'Occupied'
+            elif current_res.status == 'Confirmed':
+                if current_res.check_in_date.date() <= now.date():
+                    display_status = 'Booked'
+                    time_until_checkin = current_res.check_in_date - now
+                    if time_until_checkin < CHECKIN_ALERT_WINDOW and time_until_checkin > timezone.timedelta(0):
+                        is_alerting = True
+                else:
+                    pass 
+        else:
+            # === ĐOẠN FIX LỖI "NO REVERSE MATCH" ===
+            # Nếu không tìm thấy Reservation nào nhưng trạng thái phòng đang là Booked hoặc Occupied
+            # thì reset về Vacant để tránh lỗi template (Ghost booking)
+            if display_status in ['Booked', 'Occupied']:
+                display_status = 'Vacant'
+            # =======================================
+
+        data = {
+            'room': room,
+            'reservation': current_res,
+            'guest_name': current_res.guest.full_name if current_res else "",
+            'is_alerting': is_alerting,
+            'display_status': display_status 
+        }
+        room_data.append(data)
+
+    def sort_key(item):
+        status = item['display_status']
+        if item['is_alerting']: return 0
+        if status == 'Booked': return 1
+        if status == 'Occupied': return 2
+        if status == 'Dirty': return 3
+        return 4 
+
+    room_data.sort(key=sort_key)
+
+    context = {
+        'page_title': "Dashboard Quản lý Phòng",
+        'room_data': room_data,
+        'now': now
+    }
+    
+    # === QUAN TRỌNG: PHẢI CÓ DÒNG RETURN NÀY Ở CẤP ĐỘ NGOÀI CÙNG ===
+    return render(request, 'pms/dashboard.html', context)
